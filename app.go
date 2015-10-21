@@ -11,14 +11,9 @@ import (
 	"github.com/zenazn/goji/web"
 )
 
-var t *template.Template
+var t = template.Must(template.ParseGlob("templates/*.html")) // cache all templates
 
 func main() {
-	var err error
-	t, err = template.ParseGlob("templates/*.html") // load templates
-	if err != nil {
-		log.Fatal(err)
-	}
 	goji.Use(HtmlText)
 	goji.Get("/", Root)
 	// goji.Get("/login", Login)
@@ -33,5 +28,6 @@ func Root(w http.ResponseWriter, r *http.Request) {
 }
 
 func User(c web.C, w http.ResponseWriter, r *http.Request) {
+	log.Print(c.URLParams["username"])
 	io.WriteString(w,c.URLParams["username"])
 }
