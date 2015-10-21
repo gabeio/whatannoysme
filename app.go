@@ -24,7 +24,7 @@ func main() {
 }
 
 func Root(w http.ResponseWriter, r *http.Request) {
-	t.ExecuteTemplate(w, "index.html", nil) // only serve index.html
+	t.ExecuteTemplate(w, "index", nil) // only serve index.html
 }
 
 func User(c web.C, w http.ResponseWriter, r *http.Request) {
