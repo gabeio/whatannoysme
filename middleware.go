@@ -1,4 +1,4 @@
-package main
+package wam
 
 import (
 	"net/http"
