@@ -39,7 +39,7 @@ func main() {
 	goji.Post("/login", PostLogin)
 	goji.Get("/:username", User)
 	goji.Post("/:username", PostUser)
-	flag.Set("bind", ":9000") // set port to listen on
+	flag.Set("bind", os.Getenv("SOCKET")) // set port to listen on
 	goji.Serve()
 }
 
