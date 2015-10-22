@@ -2,18 +2,30 @@ package main
 
 import (
 	"io"
+	"os"
 	"log"
 	"flag"
 	"net/http"
 	"html/template"
 
+	// goji
 	"github.com/zenazn/goji"
 	"github.com/zenazn/goji/web"
+	// mgo
+	"gopkg.in/mgo.v2"
 )
 
 var t = template.Must(template.ParseGlob("templates/*.html")) // cache all templates
 
+var m *mgo.Session
+
 func main() {
+	log.Print(os.Getenv("MONGO"))
+	var err error
+	m, err = mgo.Dial(os.Getenv("MONGO"))
+	if err != nil {
+		log.Fatal(err)
+	}
 	goji.Use(HtmlText) // Only Serve Html Back
 	goji.Get("/", Root)
 	goji.Get("/login", Login)
@@ -22,6 +34,7 @@ func main() {
 	goji.Post("/:username", PostUser)
 	flag.Set("bind", ":9000") // set port to listen on
 	goji.Serve()
+	m.Close()
 }
 
 func Root(w http.ResponseWriter, r *http.Request) {
