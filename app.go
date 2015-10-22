@@ -13,16 +13,23 @@ import (
 	"github.com/zenazn/goji/web"
 	// mgo
 	"gopkg.in/mgo.v2"
+	// redigo
+	"github.com/garyburd/redigo/redis"
 )
 
 var t = template.Must(template.ParseGlob("templates/*.html")) // cache all templates
 
-var m *mgo.Session
+var m *mgo.Session // mongo connection
+
+var r redis.Conn // redis connection
 
 func main() {
-	log.Print(os.Getenv("MONGO"))
 	var err error
 	m, err = mgo.Dial(os.Getenv("MONGO"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	r, err = redis.DialURL(os.Getenv("REDIS"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -34,7 +41,6 @@ func main() {
 	goji.Post("/:username", PostUser)
 	flag.Set("bind", ":9000") // set port to listen on
 	goji.Serve()
-	m.Close()
 }
 
 func Root(w http.ResponseWriter, r *http.Request) {
