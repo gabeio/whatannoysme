@@ -53,7 +53,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 func PostLogin(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm() // translate form
-	r.ParseMultipartForm(1024) // translate multipart
+	r.ParseMultipartForm(1048576) // translate multipart 1MB limit
 	log.Print(len(r.Form))
 	// for i,e := range r.Form {
 	// 	log.Print(i)
