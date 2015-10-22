@@ -1,4 +1,4 @@
-package wam
+package main
 
 import (
 	"io"
