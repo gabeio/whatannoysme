@@ -5,17 +5,25 @@ import (
 	"os"
 	"log"
 	"flag"
+	"math"
 	"time"
 	"strconv"
 	"net/http"
 	"math/rand"
 	"html/template"
+	// "crypto"
+
+	// golang.org/crypto
+	"golang.org/x/crypto/bcrypt"
 
 	// goji
 	"github.com/zenazn/goji"
 	"github.com/zenazn/goji/web"
+
 	// mgo
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
+
 	// redigo
 	"github.com/garyburd/redigo/redis"
 )
@@ -23,22 +31,33 @@ import (
 var tem = template.Must(template.ParseGlob("templates/*.html")) // cache all templates
 
 var mng *mgo.Session // mongo connection
+var mdb *mgo.Database // database
+var muser *mgo.Collection // user collection
+var mpeeve *mgo.Collection // peeve collection
 
 var red redis.Conn // redis connection
 
-var ran *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
+var ran *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano())) // random source
+
+var salt = ran.Int63()
+
+var n = math.Pow(2,15) // scrypt N
+var r = 8 // scrypt r
+var p = 1 // scrypt p
+
+var err error
 
 func main() {
-	var err error
-	mng, err = mgo.Dial(os.Getenv("MONGO"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	red, err = redis.DialURL(os.Getenv("REDIS"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	goji.Use(HtmlText) // Only Serve Html Back
+	// db connects
+	mng = getMgoSession()
+	defer mng.Close() // try to always close
+	red = getRedisConn()
+	defer red.Close() // try to always close
+	// further db insides
+	mdb = mng.DB(os.Getenv("MONGO_DB"))
+	muser = mdb.C("user")
+	mpeeve = mdb.C("peeve")
+	goji.Use(HtmlText) // only serve html/text
 	goji.Get("/", Root)
 	goji.Get("/login", Login)
 	goji.Post("/login", PostLogin)
@@ -49,8 +68,6 @@ func main() {
 	goji.Post("/:username", PostUser)
 	flag.Set("bind", os.Getenv("SOCKET")) // set port to listen on
 	goji.Serve()
-	defer mng.Close()
-	defer red.Close()
 }
 
 func Root(w http.ResponseWriter, r *http.Request) {
@@ -64,10 +81,31 @@ func Login(w http.ResponseWriter, r *http.Request) {
 func PostLogin(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm() // translate form
 	r.ParseMultipartForm(1048576) // translate multipart 1MB limit
-
-	log.Print(r.Form["username"][0])
-	log.Print(r.Form["password"][0])
-	io.WriteString(w,"ok")
+	f := r.Form
+	switch {
+	case f["username"] == nil, len(f["username"]) != 1, f["username"][0] == "":
+		err = tem.ExecuteTemplate(w, "login", map[string]string{"Error":"Invalid Username"})
+	case f["password"] == nil, len(f["password"]) != 1, f["password"][0] == "":
+		err = tem.ExecuteTemplate(w, "login", map[string]string{"Error":"Invalid Password"})
+	default:
+		result := User{}
+		err = muser.Find(bson.M{"username": f["username"][0]}).One(&result)
+		log.Print(result)
+		if err != nil {
+			if err.Error() == "not found" {
+				tem.ExecuteTemplate(w, "login", map[string]string{"Error":"User Not Found"})
+			}else{
+				log.Panic(err)
+			}
+		}else{
+			err = bcrypt.CompareHashAndPassword([]byte(result.Hash),[]byte(f["password"][0]))
+			if err != nil {
+				log.Panic(err)
+			}else{
+				log.Print("you are "+f["username"][0])
+			}
+		}
+	}
 }
 
 func Signup(w http.ResponseWriter, r *http.Request) {
@@ -77,24 +115,54 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 func PostSignup(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm() // translate form
 	r.ParseMultipartForm(1048576) // translate multipart 1MB limit
-	if r.Form["username"] == nil {
-		tem.ExecuteTemplate(w, "signup", nil)
-	}else if r.Form["password"] == nil {
-		randIssue := strconv.FormatInt(rand.Int63(), 10)
-		io.WriteString(w, randIssue)
-		log.Print(randIssue)
-	}else if r.Form["password"][0] != r.Form["password"][1] {
-		randIssue := strconv.FormatInt(rand.Int63(), 10)
-		io.WriteString(w, randIssue)
-		log.Print(randIssue)
-	}else{
-		//signup
-		io.WriteString(w, "OKAY!")
+	f := r.Form
+	switch {
+	case f["username"] == nil, len(f["username"]) != 1, f["username"][0] == "":
+		err = tem.ExecuteTemplate(w, "signup", map[string]string{"Error":"Bad Username"})
+		if err != nil {
+			log.Panic(err)
+		}
+	case f["password"] == nil, len(f["password"]) != 2, f["password"][0] == "":
+		err = tem.ExecuteTemplate(w, "signup", map[string]string{"Error":"Bad Password"})
+		if err != nil {
+			log.Panic(err)
+		}
+	case f["email"] == nil, len(f["email"]) != 1, f["email"][0] == "":
+		err = tem.ExecuteTemplate(w, "signup", map[string]string{"Error":"Bad Email"})
+		if err != nil {
+			log.Panic(err)
+		}
+	case f["password"][0] != f["password"][1]:
+		err = tem.ExecuteTemplate(w, "signup", map[string]string{"Error":"Passwords do not match"})
+		if err != nil {
+			log.Panic(err)
+		}
+	default:
+		answer, err := bcrypt.GenerateFromPassword([]byte(f["password"][0]), bcrypt.DefaultCost)
+		if err != nil {
+			log.Panic(err)
+		}else{
+			log.Print(answer)
+		}
+		err = muser.Insert(&User{
+			Id: bson.NewObjectId(),
+			Username: f["username"][0],
+			// Hash: string(scrypt.Key(f["password"][0], salt, n, r, p, 32)[:]), // N r p
+			Hash: string(answer),
+			Email: f["email"][0],
+			Joined: time.Now(),
+		});
+		if err != nil {
+			log.Panic(err)
+			io.WriteString(w, "There was an error... Where did it get to?")
+		}else{
+			io.WriteString(w, "Thanks for signing up!")
+		}
 	}
 }
 
 func Random(w http.ResponseWriter, r *http.Request) {
-	io.WriteString(w, strconv.FormatInt(rand.Int63(), 10))
+	io.WriteString(w, strconv.FormatInt(ran.Int63(), 10))
 }
 
 func GetUser(c web.C, w http.ResponseWriter, r *http.Request) {

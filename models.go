@@ -7,6 +7,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+// MONGO MODELS
 type User struct {
 	Id bson.ObjectId `bson:"_id"`
 	Username string `bson:"username"`

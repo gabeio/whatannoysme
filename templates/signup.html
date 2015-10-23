@@ -3,7 +3,7 @@
 		<div class="container-fluid">
 			<div class="col-xs-12 col-sm-12 col-md-12 col-lg-10 col-lg-offset-1">
 				<form class="form-horizontal" method="POST" enctype="multipart/form-data">
-					<input type="hidden" name="_csrf" value="{{ .Csrf }}" />
+					{{ if .Csrf }}<input type="hidden" name="_csrf" value="{{ .Csrf }}" />{{ end }}
 					<div class="form-group">
 						<div class="col-sm-12">
 							<h2>Signup</h2>
@@ -12,7 +12,7 @@
 					{{ if .Error }}
 					<div class="form-group">
 						<div class="alert alert-danger" role="alert">
-							{{ .Error}}
+							{{ .Error }}
 						</div>
 					</div>
 					{{ end }}
@@ -22,6 +22,14 @@
 						</div>
 						<div class="col-sm-10">
 							<input type="text" class="form-control" id="formUsername" name="username" placeholder="Username" tabindex="1" autofocus />
+						</div>
+					</div>
+					<div class="form-group">
+						<div class="col-sm-2">
+							<label for="formEmail">Email</label>
+						</div>
+						<div class="col-sm-10">
+							<input type="text" class="form-control" id="formEmail" name="email" placeholder="Email@email.com" tabindex="1" autofocus />
 						</div>
 					</div>
 					<div class="form-group">
