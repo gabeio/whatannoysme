@@ -5,7 +5,10 @@ import (
 	"os"
 	"log"
 	"flag"
+	"time"
+	"strconv"
 	"net/http"
+	"math/rand"
 	"html/template"
 
 	// goji
@@ -17,19 +20,21 @@ import (
 	"github.com/garyburd/redigo/redis"
 )
 
-var t = template.Must(template.ParseGlob("templates/*.html")) // cache all templates
+var tem = template.Must(template.ParseGlob("templates/*.html")) // cache all templates
 
-var m *mgo.Session // mongo connection
+var mng *mgo.Session // mongo connection
 
-var r redis.Conn // redis connection
+var red redis.Conn // redis connection
+
+var ran *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 func main() {
 	var err error
-	m, err = mgo.Dial(os.Getenv("MONGO"))
+	mng, err = mgo.Dial(os.Getenv("MONGO"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	r, err = redis.DialURL(os.Getenv("REDIS"))
+	red, err = redis.DialURL(os.Getenv("REDIS"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -37,42 +42,74 @@ func main() {
 	goji.Get("/", Root)
 	goji.Get("/login", Login)
 	goji.Post("/login", PostLogin)
-	goji.Get("/:username", User)
+	goji.Get("/random", Random)
+	goji.Get("/signup", Signup)
+	goji.Post("/signup", PostSignup)
+	goji.Get("/:username", GetUser)
 	goji.Post("/:username", PostUser)
 	flag.Set("bind", os.Getenv("SOCKET")) // set port to listen on
 	goji.Serve()
+	defer mng.Close()
+	defer red.Close()
 }
 
 func Root(w http.ResponseWriter, r *http.Request) {
-	t.ExecuteTemplate(w, "index", nil) // only serve index.html
+	tem.ExecuteTemplate(w, "index", nil) // only serve index.html
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	t.ExecuteTemplate(w, "login", nil)
+	tem.ExecuteTemplate(w, "login", nil)
 }
 
 func PostLogin(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm() // translate form
 	r.ParseMultipartForm(1048576) // translate multipart 1MB limit
-	log.Print(len(r.Form))
-	// for i,e := range r.Form {
-	// 	log.Print(i)
-	// 	log.Print(e)
-	// }
+
 	log.Print(r.Form["username"][0])
 	log.Print(r.Form["password"][0])
 	io.WriteString(w,"ok")
 }
 
-func User(c web.C, w http.ResponseWriter, r *http.Request) {
+func Signup(w http.ResponseWriter, r *http.Request) {
+	tem.ExecuteTemplate(w, "signup", nil)
+}
+
+func PostSignup(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm() // translate form
+	r.ParseMultipartForm(1048576) // translate multipart 1MB limit
+	if r.Form["username"] == nil {
+		tem.ExecuteTemplate(w, "signup", nil)
+	}else if r.Form["password"] == nil {
+		randIssue := strconv.FormatInt(rand.Int63(), 10)
+		io.WriteString(w, randIssue)
+		log.Print(randIssue)
+	}else if r.Form["password"][0] != r.Form["password"][1] {
+		randIssue := strconv.FormatInt(rand.Int63(), 10)
+		io.WriteString(w, randIssue)
+		log.Print(randIssue)
+	}else{
+		//signup
+		io.WriteString(w, "OKAY!")
+	}
+}
+
+func Random(w http.ResponseWriter, r *http.Request) {
+	io.WriteString(w, strconv.FormatInt(rand.Int63(), 10))
+}
+
+func GetUser(c web.C, w http.ResponseWriter, r *http.Request) {
 	log.Print(c.URLParams["username"])
-	io.WriteString(w,c.URLParams["username"])
+	tem.ExecuteTemplate(w, "user", c.URLParams["username"])
 }
 
 func PostUser(c web.C, w http.ResponseWriter, r *http.Request) {
 	r.ParseForm() // translate form
-	r.ParseMultipartForm(1024) // translate multipart
-
-	log.Print(c.URLParams["username"])
-	io.WriteString(w,c.URLParams["username"])
+	r.ParseMultipartForm(1048576) // translate multipart
+	if r.Form["body"] == nil {
+		// log.Print(w.Body)
+		// log.Print(r)
+		// w.Body.Close()
+		io.WriteString(w,"") // closest thing to .close()
+	}
+	io.WriteString(w,r.Form["body"][0])
 }
