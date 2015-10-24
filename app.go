@@ -29,12 +29,6 @@ var red redis.Conn // redis connection
 
 var ran *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano())) // random source
 
-var salt = ran.Int63()
-
-var n = math.Pow(2,15) // scrypt N
-var r = 8 // scrypt r
-var p = 1 // scrypt p
-
 var err error
 
 func main() {
