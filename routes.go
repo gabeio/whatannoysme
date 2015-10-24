@@ -40,16 +40,26 @@ func PostLogin(w http.ResponseWriter, r *http.Request) {
 		log.Print(result)
 		if err != nil {
 			if err.Error() == "not found" {
-				tem.ExecuteTemplate(w, "login", map[string]string{"Error":"User Not Found"})
+				err = tem.ExecuteTemplate(w, "login", map[string]string{"Error":"Invalid Username or Password"})
+				if err != nil {
+					log.Print(err)
+				}
 			}else{
 				log.Panic(err)
 			}
 		}else{
 			err = bcrypt.CompareHashAndPassword([]byte(result.Hash),[]byte(f["password"][0]))
 			if err != nil {
-				log.Panic(err)
+				if err == bcrypt.ErrMismatchedHashAndPassword {
+					err = tem.ExecuteTemplate(w, "login", map[string]string{"Error":"Invalid Username or Password"})
+					if err != nil {
+						log.Print(err)
+					}
+				}else{
+					log.Panic(err)
+				}
 			}else{
-				log.Print("you are "+f["username"][0])
+				io.WriteString(w, "You are "+f["username"][0])
 			}
 		}
 	}
@@ -94,7 +104,6 @@ func PostSignup(w http.ResponseWriter, r *http.Request) {
 		err = muser.Insert(&User{
 			Id: bson.NewObjectId(),
 			Username: f["username"][0],
-			// Hash: string(scrypt.Key(f["password"][0], salt, n, r, p, 32)[:]), // N r p
 			Hash: string(answer),
 			Email: f["email"][0],
 			Joined: time.Now(),
