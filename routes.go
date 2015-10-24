@@ -33,36 +33,45 @@ func PostLogin(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case f["username"] == nil, len(f["username"]) != 1, f["username"][0] == "":
 		err = tem.ExecuteTemplate(w, "login", map[string]string{"Error":"Invalid Username"})
+		if err != nil {
+			log.Panic(err)
+		}
+		return // stop
 	case f["password"] == nil, len(f["password"]) != 1, f["password"][0] == "":
 		err = tem.ExecuteTemplate(w, "login", map[string]string{"Error":"Invalid Password"})
+		if err != nil {
+			log.Panic(err)
+		}
+		return // stop
 	default:
 		result := User{}
 		err = muser.Find(bson.M{"username": f["username"][0]}).One(&result)
-		log.Print(result)
 		if err != nil {
-			if err == mgo.ErrNotFound {
+			if err == mgo.ErrNotFound { // user not found
 				err = tem.ExecuteTemplate(w, "login", map[string]string{"Error":"Invalid Username or Password"})
 				if err != nil {
 					log.Panic(err)
 				}
-			}else{
-				log.Panic(err)
+				return // stop
 			}
-		}else{
-			err = bcrypt.CompareHashAndPassword([]byte(result.Hash),[]byte(f["password"][0]))
-			if err != nil {
-				if err == bcrypt.ErrMismatchedHashAndPassword {
-					err = tem.ExecuteTemplate(w, "login", map[string]string{"Error":"Invalid Username or Password"})
-					if err != nil {
-						log.Panic(err)
-					}
-				}else{
+			// otherwise
+			log.Panic(err)
+			return // stop
+		}
+		err = bcrypt.CompareHashAndPassword([]byte(result.Hash),[]byte(f["password"][0]))
+		if err != nil {
+			if err == bcrypt.ErrMismatchedHashAndPassword {
+				err = tem.ExecuteTemplate(w, "login", map[string]string{"Error":"Invalid Username or Password"})
+				if err != nil {
 					log.Panic(err)
 				}
-			}else{
-				io.WriteString(w, "You are "+f["username"][0])
+				return // stop
 			}
+			// otherwise
+			log.Panic(err)
+			return // stop
 		}
+		io.WriteString(w, "You are "+f["username"][0])
 	}
 }
 
@@ -80,27 +89,30 @@ func PostSignup(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Panic(err)
 		}
+		return // stop
 	case f["password"] == nil, len(f["password"]) != 2, f["password"][0] == "":
 		err = tem.ExecuteTemplate(w, "signup", map[string]string{"Error":"Bad Password"})
 		if err != nil {
 			log.Panic(err)
 		}
+		return // stop
 	case f["email"] == nil, len(f["email"]) != 1, f["email"][0] == "":
 		err = tem.ExecuteTemplate(w, "signup", map[string]string{"Error":"Bad Email"})
 		if err != nil {
 			log.Panic(err)
 		}
+		return // stop
 	case f["password"][0] != f["password"][1]:
 		err = tem.ExecuteTemplate(w, "signup", map[string]string{"Error":"Passwords do not match"})
 		if err != nil {
 			log.Panic(err)
 		}
+		return // stop
 	default:
 		answer, err := bcrypt.GenerateFromPassword([]byte(f["password"][0]), 11)
 		if err != nil {
 			log.Panic(err)
-		}else{
-			log.Print(answer)
+			return // stop
 		}
 		err = muser.Insert(&User{
 			Id: bson.NewObjectId(),
@@ -112,9 +124,9 @@ func PostSignup(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Panic(err)
 			io.WriteString(w, "There was an error... Where did it get to?")
-		}else{
-			io.WriteString(w, "Thanks for signing up!")
+			return // stop
 		}
+		io.WriteString(w, "Thanks for signing up!")
 	}
 }
 
