@@ -27,7 +27,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 func PostLogin(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm() // translate form
-	r.ParseMultipartForm(1048576) // translate multipart 1MB limit
+	r.ParseMultipartForm(1000000) // translate multipart 1MB limit
 	f := r.Form
 	switch {
 	case f["username"] == nil, len(f["username"]) != 1, f["username"][0] == "":
@@ -61,7 +61,7 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 
 func PostSignup(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm() // translate form
-	r.ParseMultipartForm(1048576) // translate multipart 1MB limit
+	r.ParseMultipartForm(1000000) // translate multipart 1MB limit
 	f := r.Form
 	switch {
 	case f["username"] == nil, len(f["username"]) != 1, f["username"][0] == "":
@@ -85,7 +85,7 @@ func PostSignup(w http.ResponseWriter, r *http.Request) {
 			log.Panic(err)
 		}
 	default:
-		answer, err := bcrypt.GenerateFromPassword([]byte(f["password"][0]), bcrypt.DefaultCost)
+		answer, err := bcrypt.GenerateFromPassword([]byte(f["password"][0]), 11)
 		if err != nil {
 			log.Panic(err)
 		}else{
