@@ -28,7 +28,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 func PostLogin(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm() // translate form
-	r.ParseMultipartForm(1000000) // translate multipart 1MB limit
+	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
 	f := r.Form
 	switch {
 	case f["username"] == nil, len(f["username"]) != 1, f["username"][0] == "":
@@ -81,52 +81,73 @@ func Signup(w http.ResponseWriter, r *http.Request) {
 
 func PostSignup(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm() // translate form
-	r.ParseMultipartForm(1000000) // translate multipart 1MB limit
+	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
 	f := r.Form
 	switch {
+	// if username isn't present or there aren't 1 username field(s) or username is blank
 	case f["username"] == nil, len(f["username"]) != 1, f["username"][0] == "":
 		err = tem.ExecuteTemplate(w, "signup", map[string]string{"Error":"Bad Username"})
 		if err != nil {
 			log.Panic(err)
 		}
 		return // stop
+	// if password isn't present or there aren't 2 password field(s) or password is blank
 	case f["password"] == nil, len(f["password"]) != 2, f["password"][0] == "":
 		err = tem.ExecuteTemplate(w, "signup", map[string]string{"Error":"Bad Password"})
 		if err != nil {
 			log.Panic(err)
 		}
 		return // stop
+	// if email isn't present or there aren't 1 email field(s) or email is blank
 	case f["email"] == nil, len(f["email"]) != 1, f["email"][0] == "":
 		err = tem.ExecuteTemplate(w, "signup", map[string]string{"Error":"Bad Email"})
 		if err != nil {
 			log.Panic(err)
 		}
 		return // stop
+	// if the two passwords don't match
 	case f["password"][0] != f["password"][1]:
 		err = tem.ExecuteTemplate(w, "signup", map[string]string{"Error":"Passwords do not match"})
 		if err != nil {
 			log.Panic(err)
 		}
 		return // stop
+	// otherwise regester user
 	default:
-		answer, err := bcrypt.GenerateFromPassword([]byte(f["password"][0]), 11)
+		result := User{}
+		err = muser.Find(bson.M{"username": f["username"][0]}).One(&result)
 		if err != nil {
-			log.Panic(err)
+			if err == mgo.ErrNotFound {
+				answer, err := bcrypt.GenerateFromPassword([]byte(f["password"][0]), 11)
+				if err != nil {
+					log.Panic(err)
+					return // stop
+				}
+				err = muser.Insert(&User{
+					Id: bson.NewObjectId(),
+					Username: f["username"][0],
+					Hash: string(answer),
+					Email: f["email"][0],
+					Joined: time.Now(),
+				});
+				if err != nil {
+					log.Panic(err)
+					io.WriteString(w, "There was an error... Where did it get to?")
+					return // stop
+				}
+				io.WriteString(w, "Thanks for signing up!")
+				return // stop
+			}else{
+				log.Panic(err) // unknown other error
+				return // stop
+			}
+		}else{
+			err = tem.ExecuteTemplate(w, "signup", map[string]string{"Error":"Username taken"})
+			if err != nil {
+				log.Panic(err)
+			}
 			return // stop
 		}
-		err = muser.Insert(&User{
-			Id: bson.NewObjectId(),
-			Username: f["username"][0],
-			Hash: string(answer),
-			Email: f["email"][0],
-			Joined: time.Now(),
-		});
-		if err != nil {
-			log.Panic(err)
-			io.WriteString(w, "There was an error... Where did it get to?")
-			return // stop
-		}
-		io.WriteString(w, "Thanks for signing up!")
 	}
 }
 
