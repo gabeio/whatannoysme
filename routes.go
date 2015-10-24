@@ -14,6 +14,7 @@ import (
 	"github.com/zenazn/goji/web"
 
 	// mgo
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -39,10 +40,10 @@ func PostLogin(w http.ResponseWriter, r *http.Request) {
 		err = muser.Find(bson.M{"username": f["username"][0]}).One(&result)
 		log.Print(result)
 		if err != nil {
-			if err.Error() == "not found" {
+			if err == mgo.ErrNotFound {
 				err = tem.ExecuteTemplate(w, "login", map[string]string{"Error":"Invalid Username or Password"})
 				if err != nil {
-					log.Print(err)
+					log.Panic(err)
 				}
 			}else{
 				log.Panic(err)
@@ -53,7 +54,7 @@ func PostLogin(w http.ResponseWriter, r *http.Request) {
 				if err == bcrypt.ErrMismatchedHashAndPassword {
 					err = tem.ExecuteTemplate(w, "login", map[string]string{"Error":"Invalid Username or Password"})
 					if err != nil {
-						log.Print(err)
+						log.Panic(err)
 					}
 				}else{
 					log.Panic(err)
