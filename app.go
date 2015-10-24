@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"flag"
-	"math"
 	"time"
 	"math/rand"
 	"html/template"
