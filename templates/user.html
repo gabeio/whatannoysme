@@ -1,28 +1,51 @@
 {{ define "user" }}
 {{ template "head" }}
 		<div class="container-fluid">
-			<div class="col-xs-12 col-sm-12 col-md-12 col-lg-10 col-lg-offset-1">
-				<form class="form-horizontal" method="POST" enctype="multipart/form-data">
-					<div class="form-group">
+			<div class="row">
+				<div class="col-xs-12 col-sm-12 col-md-12 col-lg-10 col-lg-offset-1">
+					<div class="row">
 						<div class="col-sm-12">
-							<h2>Pet Peve</h2>
+							<h2>Pet Peeves</h2>
 						</div>
 					</div>
-					<div class="form-group">
-						<div class="col-sm-2">
-							<label for="formBody">Body</label>
-						</div>
-						<div class="col-sm-10">
-							<textarea id="formBody" class="form-control" name="body"></textarea>
-							<!-- <input type="text" class="form-control" id="formUsername" name="username" placeholder="Username" tabindex="1" autofocus /> -->
-						</div>
-					</div>
-					<div class="form-group">
-						<div class="col-sm-offset-2 col-sm-10">
-							<button type="submit" class="btn btn-default" tabindex="3">Submit</button>
+					{{ if .Error }}
+					<div class="row">
+						<div class="col-sm-12">
+							<div class="alert alert-danger" role="alert">
+								{{ .Error }}
+							</div>
 						</div>
 					</div>
-				</form>
+					{{ end }}
+					{{ if .Peeves }}
+					<div class="row">
+						<div class="col-sm-12">
+							<ul class="list-group">
+								{{ range .Peeves }}
+								{{ with . }}
+								<li class="list-group-item">{{ .Body }}</li>
+								{{ end }}
+								{{ end }}
+							</ul>
+						</div>
+					</div>
+					{{ end }}
+					<form class="form-horizontal" method="POST" enctype="multipart/form-data">
+						<div class="form-group">
+							<div class="col-sm-2">
+								<label for="formBody">Body</label>
+							</div>
+							<div class="col-sm-10">
+								<textarea id="formBody" class="form-control" name="body" tabindex="1"></textarea>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="col-sm-offset-2 col-sm-10">
+								<button type="submit" class="btn btn-default" tabindex="2">Submit</button>
+							</div>
+						</div>
+					</form>
+				</div>
 			</div>
 		</div>
 {{ template "scripts" }}

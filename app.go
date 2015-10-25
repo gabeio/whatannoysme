@@ -47,8 +47,8 @@ func main() {
 	goji.Get("/random", Random)
 	goji.Get("/signup", Signup)
 	goji.Post("/signup", PostSignup)
-	goji.Get("/:username", GetUser)
-	goji.Post("/:username", PostUser)
+	goji.Get("/:username", GetPeeve)
+	goji.Post("/:username", PostPeeve)
 	flag.Set("bind", os.Getenv("SOCKET")) // set port to listen on
 	goji.Serve()
 }

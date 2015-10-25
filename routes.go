@@ -181,3 +181,84 @@ func PostUser(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 	io.WriteString(w,r.Form["body"][0])
 }
+
+func GetPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
+	user := User{}
+	peeves := []Peeve{}
+	err = muser.Find(bson.M{"username": c.URLParams["username"]}).One(&user)
+	if err != nil {
+		if err == mgo.ErrNotFound {
+			// user not registered
+			err = tem.ExecuteTemplate(w, "error", map[string]interface{}{"Number":"404","Body":"Not Found"})
+			if err != nil {
+				log.Panic(err)
+			}
+			return // stop
+		}
+		log.Panic(err)
+		return // stop
+	}
+	err = mpeeve.Find(bson.M{"user": user.Id}).All(&peeves)
+	if err != nil {
+		log.Panic(err)
+		return // stop
+	}
+	if len(peeves) > 0 {
+		// if peeves
+		err = tem.ExecuteTemplate(w, "user", map[string]interface{}{"Peeves": peeves})
+		if err != nil {
+			log.Panic(err)
+			return // stop
+		}
+	}else{
+		// if no peeves
+		err = tem.ExecuteTemplate(w, "user", nil)
+		if err != nil {
+			log.Panic(err)
+			return // stop
+		}
+	}
+}
+
+func PostPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
+	r.ParseForm() // translate form
+	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
+	user := User{}
+	peeves := []Peeve{}
+	err = muser.Find(bson.M{"username": c.URLParams["username"]}).One(&user)
+	if err != nil {
+		// user not registered
+		if err == mgo.ErrNotFound {
+			err = tem.ExecuteTemplate(w, "error", map[string]string{"Number":"404","Body":"Not Found"})
+			if err != err {
+				log.Panic(err)
+			}
+			return // stop
+		}
+		log.Panic(err)
+		return // stop
+	}
+	err = mpeeve.Find(bson.M{"user": user.Id}).All(&peeves)
+	if err != nil {
+		log.Panic(err)
+		return // stop
+	}
+	f := r.Form
+	switch {
+	case f["body"]==nil,len(f["body"]) != 1, f["body"][0] == "":
+		err = tem.ExecuteTemplate(w, "user", map[string]interface{}{"Peeves": peeves, "Error": "Invalid Body"})
+		if err != nil {
+			// html/template error
+			log.Panic(err)
+		}
+		return // stop
+	default:
+		mpeeve.Insert(&Peeve{
+			Id: bson.NewObjectId(),
+			Creator: user.Id,
+			User: user.Id, // create a peeve == owner
+			Body: f["body"][0],
+		})
+		http.Redirect(w,r,"/"+c.URLParams["username"],302)
+	}
+}

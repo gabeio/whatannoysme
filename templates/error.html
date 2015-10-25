@@ -1,0 +1,22 @@
+{{ define "error" }}
+{{ template "head" }}
+		<div class="container-fluid">
+			<div class="row">
+				<div class="col-xs-12 col-sm-12 col-md-12 col-lg-10 col-lg-offset-1">
+					<div class="row">
+						<div class="col-sm-12">
+							<h2>Error {{ .Number }}</h2>
+						</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-12">
+							{{ .Body }}
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+{{ template "scripts" }}
+	</body>
+</html>
+{{ end }}
