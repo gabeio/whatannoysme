@@ -18,7 +18,8 @@ type User struct {
 
 type Peeve struct {
 	Id bson.ObjectId `bson:"_id"`
-	UserId bson.ObjectId `bson:"uid"`
+	Creator bson.ObjectId `bson:"creator"` // original user to create the peeve
+	User bson.ObjectId `bson:"user"` // the user who owns this copy
 	Body string `bson:"body"`
 }
 
