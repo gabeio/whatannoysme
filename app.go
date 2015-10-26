@@ -17,24 +17,20 @@ import (
 	// redigo
 	"github.com/garyburd/redigo/redis"
 )
-
-// cache all templates
-var tem = template.Must(template.ParseGlob("templates/*.html"))
-
-var mng *mgo.Session // mongo connection
-var mdb *mgo.Database // database
-var muser *mgo.Collection // user collection
-var mpeeve *mgo.Collection // peeve collection
-
-var red redis.Conn // redis connection
-
-// random source
-var ran *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
-
-// present working directory
-var pwd string
-
-var err error
+var (
+	// cache all templates
+	temps *template.Template =
+		template.Must(template.ParseGlob("templates/*.html"))
+	msess *mgo.Session // mongo connection
+	mdb *mgo.Database // database
+	muser *mgo.Collection // user collection
+	mpeeve *mgo.Collection // peeve collection
+	rconn redis.Conn // redis connection
+	// random source
+	ran *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
+	pwd string // present working directory
+	err error
+)
 
 func main() {
 	pwd, err = os.Getwd()
