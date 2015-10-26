@@ -183,85 +183,188 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 	user := user{}
 	peeves := []peeve{}
-	err = muser.Find(bson.M{"username": c.URLParams["username"]}).One(&user)
-	if err != nil {
-		if err == mgo.ErrNotFound {
-			// user not registered
-			err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
-				"Number":"404",
-				"Body":"Not Found",
-			})
-			if err != nil {
-				log.Panic(err)
-			}
-			return // stop
+	err = getUser(&user, c.URLParams["username"])
+	switch err {
+	case nil:
+		break
+	case mgo.ErrNotFound:
+		err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
+			"Number":"404",
+			"Body":"Not Found",
+		})
+		switch err {
+		case nil:
+			break
+		default:
+			log.Panic(err)
+			return
 		}
+	default:
 		log.Panic(err)
-		return // stop
+		return
 	}
-	err = mpeeve.Find(bson.M{"user": user.Id}).All(&peeves)
-	if err != nil {
+	err = getPeeves(&peeves, user.Id)
+	switch err {
+	case nil:
+		break
+	default:
 		log.Panic(err)
-		return // stop
+		return
 	}
 	if len(peeves) > 0 {
 		// if peeves
 		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
 			"Peeves": peeves,
 		})
-		if err != nil {
-			log.Panic(err)
-			return // stop
-		}
 	}else{
 		// if no peeves
 		err = temps.ExecuteTemplate(w, "user", nil)
-		if err != nil {
-			log.Panic(err)
-			return // stop
-		}
+	}
+	switch err {
+	case nil:
+		break
+	default:
+		log.Panic(err)
+		return // stop
 	}
 }
 
 func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	r.ParseForm() // translate form
 	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
-	user := user{}
-	peeves := []peeve{}
-	err = muser.Find(bson.M{"username": c.URLParams["username"]}).One(&user)
-	if err != nil {
-		// user not registered
-		if err == mgo.ErrNotFound {
+	// don't do anything before we know the form is what we want
+	f := r.Form
+	switch {
+	case f["body"]==nil, len(f["body"]) != 1, f["body"][0] == "":
+		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
+			// "Peeves": peeves,
+			"Error": "Invalid Body",
+		})
+		switch err {
+		case nil:
+			break
+		default:
+			log.Panic(err)
+			return // stop
+		}
+	case len(f["body"][0]) > 140:
+		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
+			// "Peeves": peeves,
+			"Error": "Peeve Too Long",
+		})
+		switch err {
+		case nil:
+			break
+		default:
+			log.Panic(err)
+			return // stop
+		}
+	default:
+		user := user{}
+		err = getUser(&user, c.URLParams["username"])
+		switch err {
+		case nil:
+			break
+		case mgo.ErrNotFound:
 			err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
 				"Number":"404",
 				"Body":"Not Found",
 			})
-			if err != err {
+			switch err {
+			case nil:
+				break
+			default:
 				log.Panic(err)
+				return // stop
 			}
+		default:
+			http.Error(w, http.StatusText(500), 500)
+			log.Panic(err)
+			return
+		}
+		peeves := []peeve{}
+		err = getPeeves(&peeves, user.Id)
+		switch err {
+		case nil:
+			break
+		default:
+			http.Error(w, http.StatusText(500), 500)
+			log.Panic(err)
 			return // stop
 		}
-		log.Panic(err)
-		return // stop
+		mpeeve.Insert(&peeve{
+			Id: bson.NewObjectId(),
+			Creator: user.Id,
+			User: user.Id, // create a peeve == owner
+			Body: f["body"][0],
+		})
+		http.Redirect(w,r,"/"+c.URLParams["username"],302)
 	}
-	err = mpeeve.Find(bson.M{"user": user.Id}).All(&peeves)
-	if err != nil {
-		log.Panic(err)
-		return // stop
-	}
+}
+
+func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
+	r.ParseForm() // translate form
+	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
+	// don't do anything before we know the form is what we want
 	f := r.Form
 	switch {
-	case f["body"]==nil,len(f["body"]) != 1, f["body"][0] == "":
+	case f["id"]==nil, len(f["id"]) != 1, f["id"][0] == "":
 		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
-			"Peeves": peeves,
+			// "Peeves": peeves,
 			"Error": "Invalid Body",
 		})
-		if err != nil {
-			// html/template error
+		switch err {
+		case nil:
+			break
+		default:
 			log.Panic(err)
+			return // stop
 		}
-		return // stop
+	case len(f["id"][0]) != 12:
+		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
+			// "Peeves": peeves,
+			"Error": "Peeve Too Long",
+		})
+		switch err {
+		case nil:
+			break
+		default:
+			log.Panic(err)
+			return // stop
+		}
 	default:
+		user := user{}
+		err = getUser(&user, c.URLParams["username"])
+		switch err {
+		case nil:
+			break
+		case mgo.ErrNotFound:
+			err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
+				"Number":"404",
+				"Body":"Not Found",
+			})
+			switch err {
+			case nil:
+				break
+			default:
+				log.Panic(err)
+				return // stop
+			}
+		default:
+			http.Error(w, http.StatusText(500), 500)
+			log.Panic(err)
+			return
+		}
+		peeves := []peeve{}
+		err = getPeeves(&peeves, user.Id)
+		switch err {
+		case nil:
+			break
+		default:
+			http.Error(w, http.StatusText(500), 500)
+			log.Panic(err)
+			return // stop
+		}
 		mpeeve.Insert(&peeve{
 			Id: bson.NewObjectId(),
 			Creator: user.Id,
@@ -275,6 +378,7 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 func Search(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm() // translate form
 	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
+	// TODO: actually search something instead of just redirect to <user>
 	f := r.Form
 	switch {
 	case f["q"]==nil, len(f["q"]) != 1, f["q"][0] == "":
@@ -282,7 +386,7 @@ func Search(w http.ResponseWriter, r *http.Request) {
 			"Number":"404",
 			"Body":"Not Found",
 		})
-		if err != err {
+		if err != nil {
 			log.Panic(err)
 		}
 	default:
