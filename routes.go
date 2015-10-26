@@ -271,3 +271,21 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w,r,"/"+c.URLParams["username"],302)
 	}
 }
+
+func Search(w http.ResponseWriter, r *http.Request) {
+	r.ParseForm() // translate form
+	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
+	f := r.Form
+	switch {
+	case f["q"]==nil, len(f["q"]) != 1, f["q"][0] == "":
+		err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
+			"Number":"404",
+			"Body":"Not Found",
+		})
+		if err != err {
+			log.Panic(err)
+		}
+	default:
+		http.Redirect(w, r, "/"+f["q"][0], 302)
+	}
+}
