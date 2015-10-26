@@ -2,8 +2,10 @@ package main
 
 import (
 	"os"
+	"log"
 	"flag"
 	"time"
+	"net/http"
 	"math/rand"
 	"html/template"
 
@@ -30,9 +32,16 @@ var red redis.Conn // redis connection
 // random source
 var ran *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
+// present working directory
+var pwd string
+
 var err error
 
 func main() {
+	pwd, err = os.Getwd()
+	if err != nil {
+		log.Panic(err)
+	}
 	// db connects
 	mng = getMgoSession()
 	defer mng.Close() // try to always close
@@ -51,6 +60,7 @@ func main() {
 	goji.Post("/signup", PostSignup)
 	goji.Get("/:username", GetPeeve)
 	goji.Post("/:username", PostPeeve)
+	goji.Get("/assets/*", http.StripPrefix("/assets/", http.FileServer(http.Dir(pwd+"/assets")))) //http.FileServer(
 	flag.Set("bind", os.Getenv("SOCKET")) // set port to listen on
 	goji.Serve()
 }
