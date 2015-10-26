@@ -53,7 +53,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		}
 		return // stop
 	default:
-		result := User{}
+		result := user{}
 		err = muser.Find(bson.M{"username": f["username"][0]}).One(&result)
 		if err != nil {
 			// mgo error
@@ -141,7 +141,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return // stop
 	// otherwise regester user
 	default:
-		// result := User{}
+		// result := user{}
 		var i int
 		i, err = muser.Find(bson.M{"username": f["username"][0]}).Count()
 		if i < 1 {
@@ -152,7 +152,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 				log.Panic(err)
 				return // stop
 			}
-			err = muser.Insert(&User{
+			err = muser.Insert(&user{
 				Id: bson.NewObjectId(),
 				Username: f["username"][0],
 				Hash: string(answer),
@@ -181,8 +181,8 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
-	user := User{}
-	peeves := []Peeve{}
+	user := user{}
+	peeves := []peeve{}
 	err = muser.Find(bson.M{"username": c.URLParams["username"]}).One(&user)
 	if err != nil {
 		if err == mgo.ErrNotFound {
@@ -226,8 +226,8 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	r.ParseForm() // translate form
 	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
-	user := User{}
-	peeves := []Peeve{}
+	user := user{}
+	peeves := []peeve{}
 	err = muser.Find(bson.M{"username": c.URLParams["username"]}).One(&user)
 	if err != nil {
 		// user not registered
@@ -262,7 +262,7 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 		return // stop
 	default:
-		mpeeve.Insert(&Peeve{
+		mpeeve.Insert(&peeve{
 			Id: bson.NewObjectId(),
 			Creator: user.Id,
 			User: user.Id, // create a peeve == owner

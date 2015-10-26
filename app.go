@@ -48,7 +48,7 @@ func main() {
 	mdb = msess.DB(os.Getenv("MONGO_DB"))
 	muser = mdb.C("user")
 	mpeeve = mdb.C("peeve")
-	goji.Use(TextHtml) // serve text/html
+	goji.Use(textHtml) // serve text/html
 	goji.Get("/", IndexTemplate)
 	goji.Get("/login", LoginTemplate)
 	goji.Post("/login", Login)
