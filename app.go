@@ -29,6 +29,7 @@ var (
 	rconn redis.Conn // redis connection
 	// random source
 	ran *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
+	bcryptStrength int = 12
 	pwd string // present working directory
 	err error
 )

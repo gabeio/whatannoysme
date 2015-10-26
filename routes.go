@@ -146,7 +146,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		i, err = muser.Find(bson.M{"username": f["username"][0]}).Count()
 		if i < 1 {
 			answer, err := bcrypt.GenerateFromPassword(
-				[]byte(f["password"][0]), 11)
+				[]byte(f["password"][0]), bcryptStrength)
 			if err != nil {
 				// bcrypt error
 				log.Panic(err)
