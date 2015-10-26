@@ -5,7 +5,6 @@ import (
 	"log"
 	"flag"
 	"time"
-	"net/http"
 	"math/rand"
 	"html/template"
 
@@ -51,7 +50,7 @@ func main() {
 	mdb = mng.DB(os.Getenv("MONGO_DB"))
 	muser = mdb.C("user")
 	mpeeve = mdb.C("peeve")
-	goji.Use(HtmlText) // only serve html/text
+	goji.Use(TextHtml) // serve text/html
 	goji.Get("/", Root)
 	goji.Get("/login", Login)
 	goji.Post("/login", PostLogin)
@@ -60,7 +59,6 @@ func main() {
 	goji.Post("/signup", PostSignup)
 	goji.Get("/:username", GetPeeve)
 	goji.Post("/:username", PostPeeve)
-	goji.Get("/assets/*", http.StripPrefix("/assets/", http.FileServer(http.Dir(pwd+"/assets")))) //http.FileServer(
 	flag.Set("bind", os.Getenv("SOCKET")) // set port to listen on
 	goji.Serve()
 }
