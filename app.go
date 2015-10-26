@@ -17,6 +17,7 @@ import (
 	// redigo
 	"github.com/garyburd/redigo/redis"
 )
+
 var (
 	// cache all templates
 	temps *template.Template =
@@ -38,23 +39,22 @@ func main() {
 		log.Panic(err)
 	}
 	// db connects
-	mng = getMgoSession()
-	defer mng.Close() // try to always close
-	red = getRedisConn()
-	defer red.Close() // try to always close
+	msess = getMgoSession()
+	defer msess.Close()
+	rconn = getRedisConn()
+	defer rconn.Close()
 	// further db insides
-	mdb = mng.DB(os.Getenv("MONGO_DB"))
+	mdb = msess.DB(os.Getenv("MONGO_DB"))
 	muser = mdb.C("user")
 	mpeeve = mdb.C("peeve")
 	goji.Use(TextHtml) // serve text/html
-	goji.Get("/", Root)
-	goji.Get("/login", Login)
-	goji.Post("/login", PostLogin)
-	goji.Get("/random", Random)
-	goji.Get("/signup", Signup)
-	goji.Post("/signup", PostSignup)
-	goji.Get("/:username", GetPeeve)
-	goji.Post("/:username", PostPeeve)
+	goji.Get("/", IndexTemplate)
+	goji.Get("/login", LoginTemplate)
+	goji.Post("/login", Login)
+	goji.Get("/signup", SignupTemplate)
+	goji.Post("/signup", CreateUser)
+	goji.Get("/:username", GetPeeves)
+	goji.Post("/:username", CreatePeeve)
 	flag.Set("bind", os.Getenv("SOCKET")) // set port to listen on
 	goji.Serve()
 }
