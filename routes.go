@@ -32,14 +32,18 @@ func PostLogin(w http.ResponseWriter, r *http.Request) {
 	f := r.Form
 	switch {
 	case f["username"] == nil, len(f["username"]) != 1, f["username"][0] == "":
-		err = tem.ExecuteTemplate(w, "login", map[string]string{"Error":"Invalid Username"})
+		err = tem.ExecuteTemplate(w, "login", map[string]interface{}{
+			"Error":"Invalid Username",
+		})
 		if err != nil {
 			// html/template error
 			log.Panic(err)
 		}
 		return // stop
 	case f["password"] == nil, len(f["password"]) != 1, f["password"][0] == "":
-		err = tem.ExecuteTemplate(w, "login", map[string]string{"Error":"Invalid Password"})
+		err = tem.ExecuteTemplate(w, "login", map[string]interface{}{
+			"Error":"Invalid Password",
+		})
 		if err != nil {
 			// html/template error
 			log.Panic(err)
@@ -51,7 +55,9 @@ func PostLogin(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			// mgo error
 			if err == mgo.ErrNotFound { // user not found
-				err = tem.ExecuteTemplate(w, "login", map[string]string{"Error":"Invalid Username or Password"})
+				err = tem.ExecuteTemplate(w, "login", map[string]interface{}{
+					"Error": "Invalid Username or Password",
+				})
 				if err != nil {
 					// html/template error
 					log.Panic(err)
@@ -63,11 +69,14 @@ func PostLogin(w http.ResponseWriter, r *http.Request) {
 			return // stop
 		}
 		// user found
-		err = bcrypt.CompareHashAndPassword([]byte(result.Hash),[]byte(f["password"][0]))
+		err = bcrypt.CompareHashAndPassword([]byte(result.Hash),
+			[]byte(f["password"][0]))
 		if err != nil {
 			// bcrypt error
 			if err == bcrypt.ErrMismatchedHashAndPassword { // wrong password
-				err = tem.ExecuteTemplate(w, "login", map[string]string{"Error":"Invalid Username or Password"})
+				err = tem.ExecuteTemplate(w, "login", map[string]interface{}{
+					"Error": "Invalid Username or Password",
+				})
 				if err != nil {
 					// html/template error
 					log.Panic(err)
@@ -91,17 +100,21 @@ func PostSignup(w http.ResponseWriter, r *http.Request) {
 	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
 	f := r.Form
 	switch {
-	// if username isn't present or there aren't 1 username field(s) or username is blank
+	// if username isn't present or not username field(s) or username is blank
 	case f["username"] == nil, len(f["username"]) != 1, f["username"][0] == "":
-		err = tem.ExecuteTemplate(w, "signup", map[string]string{"Error":"Bad Username"})
+		err = tem.ExecuteTemplate(w, "signup", map[string]interface{}{
+			"Error":"Bad Username",
+		})
 		if err != nil {
 			// html/template error
 			log.Panic(err)
 		}
 		return // stop
-	// if password isn't present or there aren't 2 password field(s) or password is blank
+	// if password isn't present or not 2 password field(s) or password is blank
 	case f["password"] == nil, len(f["password"]) != 2, f["password"][0] == "":
-		err = tem.ExecuteTemplate(w, "signup", map[string]string{"Error":"Bad Password"})
+		err = tem.ExecuteTemplate(w, "signup", map[string]interface{}{
+			"Error":"Bad Password",
+		})
 		if err != nil {
 			// html/template error
 			log.Panic(err)
@@ -109,7 +122,9 @@ func PostSignup(w http.ResponseWriter, r *http.Request) {
 		return // stop
 	// if email isn't present or there aren't 1 email field(s) or email is blank
 	case f["email"] == nil, len(f["email"]) != 1, f["email"][0] == "":
-		err = tem.ExecuteTemplate(w, "signup", map[string]string{"Error":"Bad Email"})
+		err = tem.ExecuteTemplate(w, "signup", map[string]interface{}{
+			"Error":"Bad Email",
+		})
 		if err != nil {
 			// html/template error
 			log.Panic(err)
@@ -117,7 +132,9 @@ func PostSignup(w http.ResponseWriter, r *http.Request) {
 		return // stop
 	// if the two passwords don't match
 	case f["password"][0] != f["password"][1]:
-		err = tem.ExecuteTemplate(w, "signup", map[string]string{"Error":"Passwords do not match"})
+		err = tem.ExecuteTemplate(w, "signup", map[string]interface{}{
+			"Error":"Passwords do not match",
+		})
 		if err != nil {
 			// html/template error
 			log.Panic(err)
@@ -129,7 +146,8 @@ func PostSignup(w http.ResponseWriter, r *http.Request) {
 		var i int
 		i, err = muser.Find(bson.M{"username": f["username"][0]}).Count()
 		if i < 1 {
-			answer, err := bcrypt.GenerateFromPassword([]byte(f["password"][0]), 11)
+			answer, err := bcrypt.GenerateFromPassword(
+				[]byte(f["password"][0]), 11)
 			if err != nil {
 				// bcrypt error
 				log.Panic(err)
@@ -151,7 +169,9 @@ func PostSignup(w http.ResponseWriter, r *http.Request) {
 			io.WriteString(w, "Thanks for signing up!")
 			return // stop
 		}else{
-			err = tem.ExecuteTemplate(w, "signup", map[string]string{"Error":"Username taken"})
+			err = tem.ExecuteTemplate(w, "signup", map[string]interface{}{
+				"Error":"Username taken",
+			})
 			if err != nil {
 				// html/template error
 				log.Panic(err)
@@ -189,7 +209,10 @@ func GetPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if err == mgo.ErrNotFound {
 			// user not registered
-			err = tem.ExecuteTemplate(w, "error", map[string]interface{}{"Number":"404","Body":"Not Found"})
+			err = tem.ExecuteTemplate(w, "error", map[string]interface{}{
+				"Number":"404",
+				"Body":"Not Found",
+			})
 			if err != nil {
 				log.Panic(err)
 			}
@@ -205,7 +228,9 @@ func GetPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 	if len(peeves) > 0 {
 		// if peeves
-		err = tem.ExecuteTemplate(w, "user", map[string]interface{}{"Peeves": peeves})
+		err = tem.ExecuteTemplate(w, "user", map[string]interface{}{
+			"Peeves": peeves,
+		})
 		if err != nil {
 			log.Panic(err)
 			return // stop
@@ -229,7 +254,10 @@ func PostPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// user not registered
 		if err == mgo.ErrNotFound {
-			err = tem.ExecuteTemplate(w, "error", map[string]string{"Number":"404","Body":"Not Found"})
+			err = tem.ExecuteTemplate(w, "error", map[string]interface{}{
+				"Number":"404",
+				"Body":"Not Found",
+			})
 			if err != err {
 				log.Panic(err)
 			}
@@ -246,7 +274,10 @@ func PostPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	f := r.Form
 	switch {
 	case f["body"]==nil,len(f["body"]) != 1, f["body"][0] == "":
-		err = tem.ExecuteTemplate(w, "user", map[string]interface{}{"Peeves": peeves, "Error": "Invalid Body"})
+		err = tem.ExecuteTemplate(w, "user", map[string]interface{}{
+			"Peeves": peeves,
+			"Error": "Invalid Body",
+		})
 		if err != nil {
 			// html/template error
 			log.Panic(err)

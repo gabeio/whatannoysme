@@ -17,7 +17,8 @@ import (
 	"github.com/garyburd/redigo/redis"
 )
 
-var tem = template.Must(template.ParseGlob("templates/*.html")) // cache all templates
+// cache all templates
+var tem = template.Must(template.ParseGlob("templates/*.html"))
 
 var mng *mgo.Session // mongo connection
 var mdb *mgo.Database // database
@@ -26,7 +27,8 @@ var mpeeve *mgo.Collection // peeve collection
 
 var red redis.Conn // redis connection
 
-var ran *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano())) // random source
+// random source
+var ran *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 var err error
 
