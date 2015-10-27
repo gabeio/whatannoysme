@@ -43,8 +43,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			break
 		default:
 			log.Panic(err)
-			return
 		}
+		return
 	case f["password"] == nil, len(f["password"]) != 1, f["password"][0] == "":
 		err = temps.ExecuteTemplate(w, "login", map[string]interface{}{
 			"Error":"Invalid Password",
@@ -54,8 +54,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			break
 		default:
 			log.Panic(err)
-			return
 		}
+		return
 	default:
 		result := user{}
 		err = muser.Find(bson.M{"username": f["username"][0]}).One(&result)
@@ -71,8 +71,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 				break
 			default:
 				log.Panic(err)
-				return
 			}
+			return
 		default:
 			log.Panic(err)
 			return
@@ -92,8 +92,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 				break
 			default:
 				log.Panic(err)
-				return
 			}
+			return
 		default:
 			log.Panic(err)
 			return
@@ -267,8 +267,8 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 			break
 		default:
 			log.Panic(err)
-			return // stop
 		}
+		return // stop
 	case len(f["body"][0]) > 140:
 		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
 			// "Peeves": peeves,
@@ -279,8 +279,8 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 			break
 		default:
 			log.Panic(err)
-			return // stop
 		}
+		return // stop
 	default:
 		user := user{}
 		err = getUser(&user, c.URLParams["username"])
@@ -297,8 +297,8 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 				break
 			default:
 				log.Panic(err)
-				return // stop
 			}
+			return // stop
 		default:
 			http.Error(w, http.StatusText(500), 500)
 			log.Panic(err)
