@@ -56,7 +56,7 @@ func main() {
 	goji.Post("/signup", CreateUser)
 	goji.Post("/search", Search)
 	goji.Get("/:username", GetPeeves)
-	goji.Post("/:username", CreatePeeve)
+	goji.Post("/:username/create", CreatePeeve)
 	goji.Post("/:username/delete", DeletePeeve)
 	flag.Set("bind", os.Getenv("SOCKET")) // set port to listen on
 	goji.Serve()

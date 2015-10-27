@@ -16,7 +16,7 @@
 						</div>
 					</div>
 					{{ end }}
-					<form class="row" method="POST" enctype="multipart/form-data">
+					<form class="row" method="POST" enctype="multipart/form-data" action="/{{ .User.Id }}/create">
 						<div class="col-sm-12">
 							<ul class="list-group">
 								<li class="list-group-item">
@@ -29,7 +29,7 @@
 								</li>
 								{{ if .Peeves }}
 								{{ range .Peeves }}{{ with . }}
-								<li class="list-group-item">{{ .Body }}</li>
+								<li class="list-group-item"><input type="hidden" name="id" value="{{ .Id.Hex }}" />{{ .Body }}</li>
 								{{ end }}{{ end }}
 								{{ end }}
 							</ul>
