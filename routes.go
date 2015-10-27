@@ -237,6 +237,7 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 		// if peeves
 		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
 			"Peeves": peeves,
+			"User": user,
 		})
 	}else{
 		// if no peeves
@@ -330,22 +331,10 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	// don't do anything before we know the form is what we want
 	f := r.Form
 	switch {
-	case f["id"]==nil, len(f["id"]) != 1, f["id"][0] == "":
+	case f["id"] == nil, len(f["id"]) != 1,
+		f["id"][0] == "", len(f["id"][0]) != 24:
 		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
-			// "Peeves": peeves,
-			"Error": "Invalid Body",
-		})
-		switch err {
-		case nil:
-			break
-		default:
-			log.Panic(err)
-			return // stop
-		}
-	case len(f["id"][0]) != 12:
-		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
-			// "Peeves": peeves,
-			"Error": "Peeve Too Long",
+			"Error": "Invalid Id",
 		})
 		switch err {
 		case nil:
@@ -387,12 +376,14 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 			log.Panic(err)
 			return // stop
 		}
-		mpeeve.Insert(&peeve{
-			Id: bson.NewObjectId(),
-			Creator: user.Id,
-			User: user.Id, // create a peeve == owner
-			Body: f["body"][0],
-		})
+		err = dropPeeve(f["id"][0], user.Id)
+		switch err {
+		case nil:
+			break
+		default:
+			log.Panic(err)
+			return
+		}
 		http.Redirect(w,r,"/"+c.URLParams["username"],302)
 	}
 }

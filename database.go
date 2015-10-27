@@ -29,18 +29,19 @@ func getRedisConn() redis.Conn {
 }
 
 func getUser(user interface{}, username string) error {
-	err = muser.Find(bson.M{"username": username}).One(user)
-	return err
+	return muser.Find(bson.M{"username": username}).One(user)
 }
 
 func getPeeves(peeves interface{}, userId bson.ObjectId) error {
-	err = mpeeve.Find(bson.M{"user": userId}).All(peeves)
-	return err
+	return mpeeve.Find(bson.M{"user": userId}).All(peeves)
 }
 
-func dropPeeve(peeveId bson.ObjectId, userId bson.ObjectId) error {
+func dropPeeve(peeveId string, userId bson.ObjectId) error {
 	peeve := peeve{}
-	mpeeve.Find(bson.M{"_id":peeveId, "user": userId}).One(&peeve)
-	err = mpeeve.Remove(&peeve)
-	return err
+	err = mpeeve.Find(bson.M{"_id":bson.ObjectIdHex(peeveId), "user": userId}).One(&peeve)
+	if err != nil {
+		log.Panic(err)
+	}
+	return mpeeve.Remove(&peeve)
+	// return err
 }
