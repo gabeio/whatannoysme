@@ -38,57 +38,65 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		err = temps.ExecuteTemplate(w, "login", map[string]interface{}{
 			"Error":"Invalid Username",
 		})
-		if err != nil {
-			// html/template error
+		switch err {
+		case nil:
+			break
+		default:
 			log.Panic(err)
+			return
 		}
-		return // stop
 	case f["password"] == nil, len(f["password"]) != 1, f["password"][0] == "":
 		err = temps.ExecuteTemplate(w, "login", map[string]interface{}{
 			"Error":"Invalid Password",
 		})
-		if err != nil {
-			// html/template error
+		switch err {
+		case nil:
+			break
+		default:
 			log.Panic(err)
+			return
 		}
-		return // stop
 	default:
 		result := user{}
 		err = muser.Find(bson.M{"username": f["username"][0]}).One(&result)
-		if err != nil {
-			// mgo error
-			if err == mgo.ErrNotFound { // user not found
-				err = temps.ExecuteTemplate(w, "login", map[string]interface{}{
-					"Error": "Invalid Username or Password",
-				})
-				if err != nil {
-					// html/template error
-					log.Panic(err)
-				}
-				return // stop
+		switch err {
+		case nil:
+			break
+		case mgo.ErrNotFound:
+			err = temps.ExecuteTemplate(w, "login", map[string]interface{}{
+				"Error": "Invalid Username or Password",
+			})
+			switch err {
+			case nil:
+				break
+			default:
+				log.Panic(err)
+				return
 			}
-			// otherwise
+		default:
 			log.Panic(err)
-			return // stop
+			return
 		}
 		// user found
 		err = bcrypt.CompareHashAndPassword([]byte(result.Hash),
 			[]byte(f["password"][0]))
-		if err != nil {
-			// bcrypt error
-			if err == bcrypt.ErrMismatchedHashAndPassword { // wrong password
-				err = temps.ExecuteTemplate(w, "login", map[string]interface{}{
-					"Error": "Invalid Username or Password",
-				})
-				if err != nil {
-					// html/template error
-					log.Panic(err)
-				}
-				return // stop
+		switch err {
+		case nil:
+			break
+		case bcrypt.ErrMismatchedHashAndPassword:
+			err = temps.ExecuteTemplate(w, "login", map[string]interface{}{
+				"Error": "Invalid Username or Password",
+			})
+			switch err {
+			case nil:
+				break
+			default:
+				log.Panic(err)
+				return
 			}
-			// otherwise
+		default:
 			log.Panic(err)
-			return // stop
+			return
 		}
 		io.WriteString(w, "You are "+f["username"][0])
 	}
@@ -104,41 +112,49 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
 			"Error":"Bad Username",
 		})
-		if err != nil {
-			// html/template error
+		switch err {
+		case nil:
+			break
+		default:
 			log.Panic(err)
+			return
 		}
-		return // stop
 	// if password isn't present or not 2 password field(s) or password is blank
 	case f["password"] == nil, len(f["password"]) != 2, f["password"][0] == "":
 		err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
 			"Error":"Bad Password",
 		})
-		if err != nil {
-			// html/template error
+		switch err {
+		case nil:
+			break
+		default:
 			log.Panic(err)
+			return
 		}
-		return // stop
 	// if email isn't present or there aren't 1 email field(s) or email is blank
 	case f["email"] == nil, len(f["email"]) != 1, f["email"][0] == "":
 		err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
 			"Error":"Bad Email",
 		})
-		if err != nil {
-			// html/template error
+		switch err {
+		case nil:
+			break
+		default:
 			log.Panic(err)
+			return
 		}
-		return // stop
 	// if the two passwords don't match
 	case f["password"][0] != f["password"][1]:
 		err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
 			"Error":"Passwords do not match",
 		})
-		if err != nil {
-			// html/template error
+		switch err {
+		case nil:
+			break
+		default:
 			log.Panic(err)
+			return
 		}
-		return // stop
 	// otherwise regester user
 	default:
 		// result := user{}
@@ -147,10 +163,12 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		if i < 1 {
 			answer, err := bcrypt.GenerateFromPassword(
 				[]byte(f["password"][0]), bcryptStrength)
-			if err != nil {
-				// bcrypt error
+			switch err {
+			case nil:
+				break
+			default:
 				log.Panic(err)
-				return // stop
+				return
 			}
 			err = muser.Insert(&user{
 				Id: bson.NewObjectId(),
@@ -159,11 +177,13 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 				Email: f["email"][0],
 				Joined: time.Now(),
 			})
-			if err != nil {
-				// mgo error
+			switch err {
+			case nil:
+				break
+			default:
 				log.Panic(err)
-				io.WriteString(w, "There was an error... Where did it get to?")
-				return // stop
+				io.WriteString(w, "There was an error... Where did it go?")
+				return
 			}
 			io.WriteString(w, "Thanks for signing up!")
 			return // stop
@@ -171,11 +191,13 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 			err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
 				"Error":"Username taken",
 			})
-			if err != nil {
-				// html/template error
+			switch err {
+			case nil:
+				break
+			default:
 				log.Panic(err)
+				return
 			}
-			return // stop
 		}
 	}
 }
@@ -386,8 +408,12 @@ func Search(w http.ResponseWriter, r *http.Request) {
 			"Number":"404",
 			"Body":"Not Found",
 		})
-		if err != nil {
+		switch err {
+		case nil:
+			break
+		default:
 			log.Panic(err)
+			return
 		}
 	default:
 		http.Redirect(w, r, "/"+f["q"][0], 302)
