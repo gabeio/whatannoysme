@@ -79,6 +79,6 @@ func checkEnvs() {
 	case os.Getenv("MONGO") == "":
 		log.Fatal("Environmental MONGO variable required")
 	case os.Getenv("MONGO_DB") == "":
-		log.Panic("Environmental MONGO_DB variable suggested")
+		log.Print("Environmental MONGO_DB variable suggested")
 	}
 }
