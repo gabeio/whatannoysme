@@ -16,16 +16,18 @@
 						</div>
 					</div>
 					{{ end }}
-					<form class="row" method="POST" enctype="multipart/form-data" action="/{{ .User.Username }}/create">
+					<div class="row">
 						<div class="col-sm-12">
 							<ul class="list-group">
 								<li class="list-group-item">
-									<span class="input-group">
-										<input type="text" class="form-control" name="body" id="body" autocomplete="off" placeholder="What Annoys You?">
-										<span class="input-group-btn">
-											<button type="submit" class="btn btn-default">Send</button>
+									<form action="/{{ .User.Username }}/create" method="POST" enctype="multipart/form-data">
+										<span class="input-group">
+											<input type="text" class="form-control" name="body" id="body" autocomplete="off" placeholder="What Annoys You?">
+											<span class="input-group-btn">
+												<button type="submit" class="btn btn-default">Send</button>
+											</span>
 										</span>
-									</span>
+									</form>
 								</li>
 								{{ if .Peeves }}
 								{{ range .Peeves }}{{ with . }}
@@ -34,7 +36,7 @@
 								{{ end }}
 							</ul>
 						</div>
-					</form>
+					</div>
 				</div>
 			</div>
 {{ template "foot" }}
