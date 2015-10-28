@@ -318,16 +318,6 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 			log.Panic(err)
 			return // stop
 		}
-		peeves := []peeve{}
-		err = getPeeves(&peeves, user.Id)
-		switch err {
-		case nil:
-			break
-		default:
-			http.Error(w, http.StatusText(500), 500)
-			log.Panic(err)
-			return // stop
-		}
 		err = dropPeeve(f["id"][0], user.Id)
 		switch err {
 		case nil:
