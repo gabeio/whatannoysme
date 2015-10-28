@@ -14,8 +14,9 @@ import (
 	// mgo
 	"gopkg.in/mgo.v2"
 
-	// redigo
-	"github.com/garyburd/redigo/redis"
+	// redis
+	// "github.com/garyburd/redigo/redis"
+	"gopkg.in/boj/redistore.v1"
 )
 
 var (
@@ -26,7 +27,7 @@ var (
 	mdb *mgo.Database // database
 	muser *mgo.Collection // user collection
 	mpeeve *mgo.Collection // peeve collection
-	rconn redis.Conn // redis connection
+	rstore *redistore.RediStore // redis store
 	// random source
 	ran *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
 	bcryptStrength int = 12
@@ -39,11 +40,13 @@ func main() {
 	if err != nil {
 		log.Panic(err)
 	}
-	// db connects
+	// mongo db connect
 	msess = getMgoSession()
 	defer msess.Close()
-	rconn = getRedisConn()
-	defer rconn.Close()
+	// redis session connect
+	rstore = getRediStore()
+	defer rstore.Close()
+	rstore.SetMaxAge(7*24*3600) // 7 days
 	// further db insides
 	mdb = msess.DB(os.Getenv("MONGO_DB"))
 	muser = mdb.C("user")
