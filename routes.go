@@ -38,24 +38,18 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		err = temps.ExecuteTemplate(w, "login", map[string]interface{}{
 			"Error":"Invalid Username",
 		})
-		switch err {
-		case nil:
-			break
-		default:
+		if err != nil {
 			log.Panic(err)
 		}
-		return
+		return // stop
 	case f["password"] == nil, len(f["password"]) != 1, f["password"][0] == "":
 		err = temps.ExecuteTemplate(w, "login", map[string]interface{}{
 			"Error":"Invalid Password",
 		})
-		switch err {
-		case nil:
-			break
-		default:
+		if err != nil {
 			log.Panic(err)
 		}
-		return
+		return // stop
 	default:
 		result := user{}
 		err = muser.Find(bson.M{"username": f["username"][0]}).One(&result)
@@ -66,16 +60,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			err = temps.ExecuteTemplate(w, "login", map[string]interface{}{
 				"Error": "Invalid Username or Password",
 			})
-			switch err {
-			case nil:
-				break
-			default:
+			if err != nil {
 				log.Panic(err)
 			}
-			return
+			return // stop
 		default:
 			log.Panic(err)
-			return
+			return // stop
 		}
 		// user found
 		err = bcrypt.CompareHashAndPassword([]byte(result.Hash),
@@ -87,16 +78,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			err = temps.ExecuteTemplate(w, "login", map[string]interface{}{
 				"Error": "Invalid Username or Password",
 			})
-			switch err {
-			case nil:
-				break
-			default:
+			if err != nil {
 				log.Panic(err)
 			}
-			return
+			return // stop
 		default:
 			log.Panic(err)
-			return
+			return // stop
 		}
 		io.WriteString(w, "You are "+f["username"][0])
 	}
@@ -112,49 +100,37 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
 			"Error":"Bad Username",
 		})
-		switch err {
-		case nil:
-			break
-		default:
+		if err != nil {
 			log.Panic(err)
-			return
 		}
+		return // stop
 	// if password isn't present or not 2 password field(s) or password is blank
 	case f["password"] == nil, len(f["password"]) != 2, f["password"][0] == "":
 		err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
 			"Error":"Bad Password",
 		})
-		switch err {
-		case nil:
-			break
-		default:
+		if err != nil {
 			log.Panic(err)
-			return
 		}
+		return // stop
 	// if email isn't present or there aren't 1 email field(s) or email is blank
 	case f["email"] == nil, len(f["email"]) != 1, f["email"][0] == "":
 		err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
 			"Error":"Bad Email",
 		})
-		switch err {
-		case nil:
-			break
-		default:
+		if err != nil {
 			log.Panic(err)
-			return
 		}
+		return // stop
 	// if the two passwords don't match
 	case f["password"][0] != f["password"][1]:
 		err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
 			"Error":"Passwords do not match",
 		})
-		switch err {
-		case nil:
-			break
-		default:
+		if err != nil {
 			log.Panic(err)
-			return
 		}
+		return // stop
 	// otherwise regester user
 	default:
 		// result := user{}
@@ -163,12 +139,9 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		if i < 1 {
 			answer, err := bcrypt.GenerateFromPassword(
 				[]byte(f["password"][0]), bcryptStrength)
-			switch err {
-			case nil:
-				break
-			default:
+			if err != nil {
 				log.Panic(err)
-				return
+				return // stop
 			}
 			err = muser.Insert(&user{
 				Id: bson.NewObjectId(),
@@ -177,13 +150,10 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 				Email: f["email"][0],
 				Joined: time.Now(),
 			})
-			switch err {
-			case nil:
-				break
-			default:
+			if err != nil {
 				log.Panic(err)
 				io.WriteString(w, "There was an error... Where did it go?")
-				return
+				return // stop
 			}
 			io.WriteString(w, "Thanks for signing up!")
 			return // stop
@@ -191,12 +161,9 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 			err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
 				"Error":"Username taken",
 			})
-			switch err {
-			case nil:
-				break
-			default:
+			if err != nil {
 				log.Panic(err)
-				return
+				return // stop
 			}
 		}
 	}
@@ -214,24 +181,18 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 			"Number":"404",
 			"Body":"Not Found",
 		})
-		switch err {
-		case nil:
-			break
-		default:
+		if err != nil {
 			log.Panic(err)
-			return
+			return // stop
 		}
 	default:
 		log.Panic(err)
-		return
+		return // stop
 	}
 	err = getPeeves(&peeves, user.Id)
-	switch err {
-	case nil:
-		break
-	default:
+	if err != nil {
 		log.Panic(err)
-		return
+		return // stop
 	}
 	if len(peeves) > 0 {
 		// if peeves
@@ -243,10 +204,7 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 		// if no peeves
 		err = temps.ExecuteTemplate(w, "user", nil)
 	}
-	switch err {
-	case nil:
-		break
-	default:
+	if err != nil {
 		log.Panic(err)
 		return // stop
 	}
@@ -303,7 +261,7 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		default:
 			http.Error(w, http.StatusText(500), 500)
 			log.Panic(err)
-			return
+			return // stop
 		}
 		peeves := []peeve{}
 		err = getPeeves(&peeves, user.Id)
@@ -364,7 +322,7 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		default:
 			http.Error(w, http.StatusText(500), 500)
 			log.Panic(err)
-			return
+			return // stop
 		}
 		peeves := []peeve{}
 		err = getPeeves(&peeves, user.Id)
@@ -382,7 +340,7 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 			break
 		default:
 			log.Panic(err)
-			return
+			return // stop
 		}
 		http.Redirect(w,r,"/"+c.URLParams["username"],302)
 	}
@@ -404,7 +362,7 @@ func Search(w http.ResponseWriter, r *http.Request) {
 			break
 		default:
 			log.Panic(err)
-			return
+			return // stop
 		}
 	default:
 		http.Redirect(w, r, "/"+f["q"][0], 302)
