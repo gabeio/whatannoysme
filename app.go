@@ -36,6 +36,7 @@ var (
 )
 
 func main() {
+	checkEnvs()
 	pwd, err = os.Getwd()
 	if err != nil {
 		log.Panic(err)
@@ -63,4 +64,21 @@ func main() {
 	goji.Post("/:username/delete", DeletePeeve)
 	flag.Set("bind", os.Getenv("SOCKET")) // set port to listen on
 	goji.Serve()
+}
+
+func checkEnvs() {
+	switch {
+	case os.Getenv("SOCKET") == "":
+		log.Fatal("Environmental SOCKET variable required")
+	case os.Getenv("REDIS") == "":
+		log.Fatal("Environmental REDIS variable required")
+	case os.Getenv("REDIS_CLIENTS") == "":
+		log.Fatal("Environmental REDIS_CLIENTS variable required")
+	case os.Getenv("KEY") == "":
+		log.Fatal("Environmental KEY variable required")
+	case os.Getenv("MONGO") == "":
+		log.Fatal("Environmental MONGO variable required")
+	case os.Getenv("MONGO_DB") == "":
+		log.Panic("Environmental MONGO_DB variable suggested")
+	}
 }
