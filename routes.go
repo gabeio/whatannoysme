@@ -29,7 +29,7 @@ func SignupTemplate(w http.ResponseWriter, r *http.Request) {
 	temps.ExecuteTemplate(w, "signup", nil)
 }
 
-func Login(w http.ResponseWriter, r *http.Request) {
+func Login(c web.C, w http.ResponseWriter, r *http.Request) {
 	r.ParseForm() // translate form
 	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
 	f := r.Form
@@ -90,7 +90,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func CreateUser(w http.ResponseWriter, r *http.Request) {
+func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 	r.ParseForm() // translate form
 	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
 	f := r.Form
@@ -194,16 +194,10 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 		log.Panic(err)
 		return // stop
 	}
-	if len(peeves) > 0 {
-		// if peeves
-		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
-			"Peeves": peeves,
-			"User": user,
-		})
-	}else{
-		// if no peeves
-		err = temps.ExecuteTemplate(w, "user", nil)
-	}
+	err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
+		"Peeves": peeves,
+		"User": user,
+	})
 	if err != nil {
 		log.Panic(err)
 		return // stop
