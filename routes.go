@@ -183,8 +183,8 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil {
 			log.Panic(err)
-			return // stop
 		}
+		return // stop
 	default:
 		log.Panic(err)
 		return // stop
@@ -283,8 +283,7 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	// don't do anything before we know the form is what we want
 	f := r.Form
 	switch {
-	case f["id"] == nil, len(f["id"]) != 1,
-		f["id"][0] == "", len(f["id"][0]) != 24:
+	case f["id"] == nil, len(f["id"]) != 1, len(f["id"][0]) != 24:
 		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
 			"Error": "Invalid Id",
 		})
