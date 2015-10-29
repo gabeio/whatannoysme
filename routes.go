@@ -23,9 +23,9 @@ func IndexTemplate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Panic(err)
 	}
-	switch v := session.Values["username"].(type) {
-	case string:
-		http.Redirect(w, r, "/"+v, 302) // redirect to their page
+	username, _ := session.Values["username"].(string)
+	if username != "" {
+		http.Redirect(w, r, "/"+username, 302) // redirect to their page
 		return // stop
 	}
 	temps.ExecuteTemplate(w, "index", nil) // only serve index.html
@@ -36,9 +36,9 @@ func SignupTemplate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Panic(err)
 	}
-	switch v := session.Values["username"].(type) {
-	case string:
-		http.Redirect(w, r, "/"+v, 302)
+	username, _ := session.Values["username"].(string)
+	if username != "" {
+		http.Redirect(w, r, "/"+username, 302)
 		return // stop
 	}
 	temps.ExecuteTemplate(w, "signup", nil)
@@ -49,9 +49,9 @@ func LoginTemplate(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Panic(err)
 	}
-	switch v := session.Values["username"].(type) {
-	case string:
-		http.Redirect(w, r, "/"+v, 302)
+	username, _ := session.Values["username"].(string)
+	if username != "" {
+		http.Redirect(w, r, "/"+username, 302)
 		return // stop
 	}
 	temps.ExecuteTemplate(w, "login", nil)
@@ -62,9 +62,9 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Panic(err)
 	}
-	switch v := session.Values["username"].(type) {
-	case string:
-		http.Redirect(w, r, "/"+v, 302)
+	username, _ := session.Values["username"].(string)
+	if username != "" {
+		http.Redirect(w, r, "/"+username, 302)
 		return // stop
 	}
 	r.ParseForm() // translate form
@@ -164,9 +164,9 @@ func Login(c web.C, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Panic(err)
 	}
-	switch v := session.Values["username"].(type) {
-	case string:
-		http.Redirect(w, r, "/"+v, 302)
+	username, _ := session.Values["username"].(string)
+	if username != "" {
+		http.Redirect(w, r, "/"+username, 302)
 		return // stop
 	}
 	r.ParseForm() // translate form
