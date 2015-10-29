@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"time"
+	"strings"
 	"net/http"
 
 	// golang.org/crypto
@@ -108,11 +109,11 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 		return // stop
 	// otherwise regester user
 	default:
-		// result := user{}
+		f["username"][0] = strings.ToLower(f["username"][0])
 		var i int
 		i, err = muser.Find(bson.M{"username": f["username"][0]}).Count()
 		if i < 1 {
-			answer, err := bcrypt.GenerateFromPassword(
+			hash, err := bcrypt.GenerateFromPassword(
 				[]byte(f["password"][0]), bcryptStrength)
 			if err != nil {
 				log.Panic(err)
@@ -121,7 +122,7 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 			err = muser.Insert(&user{
 				Id: bson.NewObjectId(),
 				Username: f["username"][0],
-				Hash: string(answer),
+				Hash: string(hash),
 				Email: f["email"][0],
 				Joined: time.Now(),
 			})
@@ -130,7 +131,9 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 				io.WriteString(w, "There was an error... Where did it go?")
 				return // stop
 			}
-			io.WriteString(w, "Thanks for signing up!")
+			session.Values["username"] = f["username"][0]
+			session.Values["hash"] = string(hash)
+			http.Redirect(w, r, "/"+f["username"][0], 302)
 			return // stop
 		}else{
 			err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
@@ -138,8 +141,8 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 			})
 			if err != nil {
 				log.Panic(err)
-				return // stop
 			}
+			return // stop
 		}
 	}
 }
@@ -175,6 +178,7 @@ func Login(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 		return // stop
 	default:
+		f["username"][0] = strings.ToLower(f["username"][0])
 		user := user{}
 		err = muser.Find(bson.M{"username": f["username"][0]}).One(&user)
 		switch err {
