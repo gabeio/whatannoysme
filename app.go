@@ -22,7 +22,8 @@ import (
 var (
 	// cache all templates
 	temps *template.Template =
-		template.Must(template.ParseGlob("templates/*.html"))
+		template.Must(template.ParseGlob(os.Getenv("GOPATH")+
+			"/src/github.com/gabeio/whatannoysme/templates/*.html"))
 	msess *mgo.Session // mongo connection
 	mdb *mgo.Database // database
 	muser *mgo.Collection // user collection
@@ -62,14 +63,22 @@ func main() {
 	goji.Get("/:username", GetPeeves)
 	goji.Post("/:username/create", CreatePeeve)
 	goji.Post("/:username/delete", DeletePeeve)
-	flag.Set("bind", os.Getenv("SOCKET")) // set port to listen on
+	flag.Set("bind", getSocket()) // set port to listen on
 	goji.Serve()
+}
+
+func getSocket() string {
+	if os.Getenv("SOCKET") != "" {
+		return os.Getenv("SOCKET")
+	}else{
+		return ":8080"
+	}
 }
 
 func checkEnvs() {
 	switch {
 	case os.Getenv("SOCKET") == "":
-		log.Fatal("Environmental SOCKET variable required")
+		log.Print("SOCKET variable undefined assuming 8080")
 	case os.Getenv("REDIS") == "":
 		log.Fatal("Environmental REDIS variable required")
 	case os.Getenv("REDIS_CLIENTS") == "":
@@ -79,6 +88,6 @@ func checkEnvs() {
 	case os.Getenv("MONGO") == "":
 		log.Fatal("Environmental MONGO variable required")
 	case os.Getenv("MONGO_DB") == "":
-		log.Print("Environmental MONGO_DB variable suggested")
+		log.Print("MONGO_DB variable undefined")
 	}
 }
