@@ -267,12 +267,16 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 			log.Panic(err)
 			return // stop
 		}
-		mpeeve.Insert(&peeve{
+		err = mpeeve.Insert(&peeve{
 			Id: bson.NewObjectId(),
-			Creator: user.Id,
+			Root: user.Id,
+			// as this is the root no parent
 			User: user.Id, // create a peeve == owner
 			Body: f["body"][0],
 		})
+		if err != nil {
+			log.Panic(err)
+		}
 		http.Redirect(w,r,"/"+c.URLParams["username"],302)
 	}
 }

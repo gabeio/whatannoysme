@@ -19,8 +19,9 @@ type (
 
 	peeve struct {
 		Id bson.ObjectId `bson:"_id"`
-		Creator bson.ObjectId `bson:"creator"` // original user to create the peeve
-		User bson.ObjectId `bson:"user"` // the user who owns this copy
+		Root bson.ObjectId `bson:"root"` // original user to create the peeve
+		Parent bson.ObjectId `bson:"parent,omitempty"` // person +1 toward the root
+		User bson.ObjectId `bson:"user"` // the user who owns this copy/peeve
 		Body string `bson:"body"`
 	}
 )
