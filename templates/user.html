@@ -1,5 +1,4 @@
-{{ define "user" }}
-{{ template "head" }}
+{{ define "user" }}{{ template "head" . }}
 			<div class="row">
 				<div class="col-xs-12 col-sm-12 col-md-12 col-lg-10 col-lg-offset-1">
 					<div class="row">
@@ -19,6 +18,9 @@
 					<div class="row">
 						<div class="col-sm-12">
 							<ul class="list-group">
+{{ if .SessionUsername }}
+	{{ if .User }}
+		{{ if eq .SessionUsername .User.Username }}
 								<li class="list-group-item">
 									<form action="/{{ .User.Username }}/create" method="POST" enctype="multipart/form-data">
 										<span class="input-group">
@@ -29,15 +31,41 @@
 										</span>
 									</form>
 								</li>
-								{{ if .Peeves }}
-								{{ range .Peeves }}{{ with . }}
-								<li class="list-group-item"><input type="hidden" name="id" value="{{ .Id.Hex }}" />{{ .Body }}</li>
-								{{ end }}{{ end }}
-								{{ end }}
+		{{ end }}
+	{{ end }}
+{{ end }}
+{{ if .Peeves }}
+	{{ range .Peeves }}
+		{{ with . }}
+			{{ if $.SessionUsername }}
+				{{ if eq $.SessionUsername $.User.Username }}
+								<li class="list-group-item">
+									<form action="/{{ $.User.Username }}/delete" method="POST" enctype="multipart/form-data">
+										<input type="hidden" id="id" name="id" value="{{ .Id.Hex }}" />
+										{{ .Body }}
+										<button type="submit" class="hides peekaboo list-btn-right btn btn-default pull-right"><span class="glyphicon glyphicon-remove"></span></button>
+									</form>
+								</li>
+				{{ else }}
+								<li class="list-group-item">
+									<form action="/metoo" method="POST" enctype="multipart/form-data">
+										<input type="hidden" id="user" name="user" value="{{ .User.Hex }}" /><!-- this is the current copy owner -->
+										<input type="hidden" id="id" name="id" value="{{ .Id.Hex }}" /><!-- this is the peeve id @ owner copy -->
+										{{ .Body }}
+										<button type="submit" class="hides peekaboo list-btn-right btn btn-default pull-right"><span class="glyphicon glyphicon-remove"></span></button>
+									</form>
+								</li>
+				{{ end }}
+			{{ else }}
+								<li class="list-group-item">{{ .Body }}</li>
+			{{ end }}
+		{{ end }}
+	{{ end }}
+{{ end }}
 							</ul>
 						</div>
 					</div>
 				</div>
 			</div>
-{{ template "foot" }}
+{{ template "foot" . }}
 {{ end }}
