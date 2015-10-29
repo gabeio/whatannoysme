@@ -461,7 +461,7 @@ func Search(w http.ResponseWriter, r *http.Request) {
 	// TODO: actually search something instead of just redirect to <user>
 	f := r.Form
 	switch {
-	case f["q"]==nil, len(f["q"]) != 1, f["q"][0] == "":
+	case f["q"]==nil, len(f["q"]) != 1:
 		err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
 			"Number": "404",
 			"Body": "Not Found",
@@ -472,6 +472,29 @@ func Search(w http.ResponseWriter, r *http.Request) {
 			log.Panic(err)
 			return // stop
 		}
+	case f["q"]!=nil, len(f["q"]) == 1:
+		users := []user{}
+		peeves := []peeve{}
+		err = searchUser(f["q"][0], &users)
+		err = searchPeeve(f["q"][0], &peeves)
+		if err != nil {
+			log.Panic(err)
+			http.Error(w, http.StatusText(500), 500)
+			return // stop
+		}
+		log.Print(users)
+		log.Print(peeves)
+		err = temps.ExecuteTemplate(w, "search", map[string]interface{}{
+			"Users": users,
+			"Peeves": peeves,
+			"SessionUsername": username,
+			"Session": session,
+		})
+		if err != nil {
+			log.Panic(err)
+			return // stop
+		}
+		return
 	default:
 		http.Redirect(w, r, "/"+f["q"][0], 302)
 	}
