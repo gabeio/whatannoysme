@@ -87,12 +87,32 @@ func getRediStore() *redistore.RediStore {
 	return redisStore
 }
 
-func getUser(user interface{}, username string) error {
+func getUser(username string, user interface{}) error {
 	return muser.Find(bson.M{"username": username}).One(user)
 }
 
-func getPeeves(peeves interface{}, userId bson.ObjectId) error {
+func searchUser(query string, users interface{}) error {
+	muser.EnsureIndexKey("username")
+	err = muser.Find(bson.M{"$text": bson.M{"$search": query}}).All(users)
+	if err != nil {
+		return err
+	}
+	// only return nil if no errors
+	return nil
+}
+
+func getPeeves(userId bson.ObjectId, peeves interface{}) error {
 	return mpeeve.Find(bson.M{"user": userId}).All(peeves)
+}
+
+func searchPeeve(query string, peeves interface{}) error {
+	muser.EnsureIndexKey("body")
+	err = mpeeve.Find(bson.M{"$text": bson.M{"$search": query}}).All(peeves)
+	if err != nil {
+		return err
+	}
+	// only return nil if no errors
+	return nil
 }
 
 func dropPeeve(peeveId string, userId bson.ObjectId) error {
