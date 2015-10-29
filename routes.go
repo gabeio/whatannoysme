@@ -51,12 +51,13 @@ func Login(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 		return // stop
 	default:
-		result := user{}
-		err = muser.Find(bson.M{"username": f["username"][0]}).One(&result)
+		user := user{}
+		err = muser.Find(bson.M{"username": f["username"][0]}).One(&user)
 		switch err {
 		case nil:
 			break
 		case mgo.ErrNotFound:
+			// user not found
 			err = temps.ExecuteTemplate(w, "login", map[string]interface{}{
 				"Error": "Invalid Username or Password",
 			})
@@ -69,12 +70,13 @@ func Login(c web.C, w http.ResponseWriter, r *http.Request) {
 			return // stop
 		}
 		// user found
-		err = bcrypt.CompareHashAndPassword([]byte(result.Hash),
+		err = bcrypt.CompareHashAndPassword([]byte(user.Hash),
 			[]byte(f["password"][0]))
 		switch err {
 		case nil:
 			break
 		case bcrypt.ErrMismatchedHashAndPassword:
+			// incorrect password
 			err = temps.ExecuteTemplate(w, "login", map[string]interface{}{
 				"Error": "Invalid Username or Password",
 			})
@@ -86,8 +88,26 @@ func Login(c web.C, w http.ResponseWriter, r *http.Request) {
 			log.Panic(err)
 			return // stop
 		}
-		io.WriteString(w, "You are "+f["username"][0])
+		// correct password
+		session.Values["username"] = f["username"][0]
+		session.Values["hash"] = user.Hash
+		if err = session.Save(r, w) ; err != nil {
+			log.Panic("Error saving session: %v", err)
+		}
+		http.Redirect(w,r,"/"+f["username"][0],302)
 	}
+}
+
+func Logout(c web.C, w http.ResponseWriter, r *http.Request) {
+	session, err := rstore.Get(r, "wam")
+	if err != nil {
+		log.Panic(err)
+	}
+	session.Options.MaxAge = -1
+	if err = session.Save(r, w); err != nil {
+		log.Panic("Error saving session: %v", err)
+	}
+	http.Redirect(w,r,"/",302)
 }
 
 func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
