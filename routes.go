@@ -18,25 +18,61 @@ import (
 )
 
 func IndexTemplate(w http.ResponseWriter, r *http.Request) {
+	session, err := rstore.Get(r, "wam")
+	if err != nil {
+		log.Panic(err)
+	}
+	switch v := session.Values["username"].(type) {
+	case string:
+		http.Redirect(w, r, "/"+v, 302) // redirect to their page
+		return // stop
+	}
 	temps.ExecuteTemplate(w, "index", nil) // only serve index.html
 }
 
 func LoginTemplate(w http.ResponseWriter, r *http.Request) {
+	session, err := rstore.Get(r, "wam")
+	if err != nil {
+		log.Panic(err)
+	}
+	switch v := session.Values["username"].(type) {
+	case string:
+		http.Redirect(w, r, "/"+v, 302)
+		return // stop
+	}
 	temps.ExecuteTemplate(w, "login", nil)
 }
 
 func SignupTemplate(w http.ResponseWriter, r *http.Request) {
+	session, err := rstore.Get(r, "wam")
+	if err != nil {
+		log.Panic(err)
+	}
+	switch v := session.Values["username"].(type) {
+	case string:
+		http.Redirect(w, r, "/"+v, 302)
+		return // stop
+	}
 	temps.ExecuteTemplate(w, "signup", nil)
 }
 
 func Login(c web.C, w http.ResponseWriter, r *http.Request) {
+	session, err := rstore.Get(r, "wam")
+	if err != nil {
+		log.Panic(err)
+	}
+	switch v := session.Values["username"].(type) {
+	case string:
+		http.Redirect(w, r, "/"+v, 302)
+		return // stop
+	}
 	r.ParseForm() // translate form
 	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
 	f := r.Form
 	switch {
 	case f["username"] == nil, len(f["username"]) != 1, f["username"][0] == "":
 		err = temps.ExecuteTemplate(w, "login", map[string]interface{}{
-			"Error":"Invalid Username",
+			"Error": "Invalid Username",
 		})
 		if err != nil {
 			log.Panic(err)
@@ -44,7 +80,7 @@ func Login(c web.C, w http.ResponseWriter, r *http.Request) {
 		return // stop
 	case f["password"] == nil, len(f["password"]) != 1, f["password"][0] == "":
 		err = temps.ExecuteTemplate(w, "login", map[string]interface{}{
-			"Error":"Invalid Password",
+			"Error": "Invalid Password",
 		})
 		if err != nil {
 			log.Panic(err)
@@ -111,23 +147,32 @@ func Logout(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
+	session, err := rstore.Get(r, "wam")
+	if err != nil {
+		log.Panic(err)
+	}
+	switch v := session.Values["username"].(type) {
+	case string:
+		http.Redirect(w, r, "/"+v, 302)
+		return // stop
+	}
 	r.ParseForm() // translate form
 	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
 	f := r.Form
 	switch {
-	// if username isn't present or not username field(s) or username is blank
+	// if username isn't present or there aren't username field(s) or blank
 	case f["username"] == nil, len(f["username"]) != 1, f["username"][0] == "":
 		err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
-			"Error":"Bad Username",
+			"Error": "Bad Username",
 		})
 		if err != nil {
 			log.Panic(err)
 		}
 		return // stop
-	// if password isn't present or not 2 password field(s) or password is blank
+	// if password isn't present or there aren't 2 password field(s) or blank
 	case f["password"] == nil, len(f["password"]) != 2, f["password"][0] == "":
 		err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
-			"Error":"Bad Password",
+			"Error": "Bad Password",
 		})
 		if err != nil {
 			log.Panic(err)
@@ -136,7 +181,7 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 	// if email isn't present or there aren't 1 email field(s) or email is blank
 	case f["email"] == nil, len(f["email"]) != 1, f["email"][0] == "":
 		err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
-			"Error":"Bad Email",
+			"Error": "Bad Email",
 		})
 		if err != nil {
 			log.Panic(err)
@@ -145,7 +190,7 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 	// if the two passwords don't match
 	case f["password"][0] != f["password"][1]:
 		err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
-			"Error":"Passwords do not match",
+			"Error": "Passwords do not match",
 		})
 		if err != nil {
 			log.Panic(err)
@@ -179,7 +224,7 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 			return // stop
 		}else{
 			err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
-				"Error":"Username taken",
+				"Error": "Username taken",
 			})
 			if err != nil {
 				log.Panic(err)
@@ -190,6 +235,11 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
+	session, err := rstore.Get(r, "wam")
+	if err != nil {
+		log.Panic(err)
+	}
+	username, _ := session.Values["username"]
 	user := user{}
 	peeves := []peeve{}
 	err = getUser(&user, c.URLParams["username"])
@@ -198,8 +248,9 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 		break
 	case mgo.ErrNotFound:
 		err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
-			"Number":"404",
-			"Body":"Not Found",
+			"Number": "404",
+			"Body": "Not Found",
+			"SessionUsername": username,
 		})
 		if err != nil {
 			log.Panic(err)
@@ -217,6 +268,7 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 	err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
 		"Peeves": peeves,
 		"User": user,
+		"SessionUsername": username,
 	})
 	if err != nil {
 		log.Panic(err)
@@ -225,6 +277,24 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
+	var username string
+	session, err := rstore.Get(r, "wam")
+	if err != nil {
+		log.Panic(err)
+	}
+	switch v := session.Values["username"].(type) {
+	case string:
+		if v != c.URLParams["username"]{
+			http.Redirect(w,r,"/"+c.URLParams["username"],302)
+			return // stop
+		}else{
+			username = v
+			break
+		}
+	default:
+		http.Redirect(w,r,"/"+c.URLParams["username"],302)
+		return // stop
+	}
 	r.ParseForm() // translate form
 	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
 	// don't do anything before we know the form is what we want
@@ -232,25 +302,19 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	switch {
 	case f["body"]==nil, len(f["body"]) != 1, f["body"][0] == "":
 		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
-			// "Peeves": peeves,
 			"Error": "Invalid Body",
+			"SessionUsername": username,
 		})
-		switch err {
-		case nil:
-			break
-		default:
+		if err != nil {
 			log.Panic(err)
 		}
 		return // stop
 	case len(f["body"][0]) > 140:
 		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
-			// "Peeves": peeves,
 			"Error": "Peeve Too Long",
+			"SessionUsername": username,
 		})
-		switch err {
-		case nil:
-			break
-		default:
+		if err != nil {
 			log.Panic(err)
 		}
 		return // stop
@@ -262,13 +326,11 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 			break
 		case mgo.ErrNotFound:
 			err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
-				"Number":"404",
-				"Body":"Not Found",
+				"Number": "404",
+				"Body": "Not Found",
+				"SessionUsername": username,
 			})
-			switch err {
-			case nil:
-				break
-			default:
+			if err != nil {
 				log.Panic(err)
 			}
 			return // stop
@@ -279,10 +341,7 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 		peeves := []peeve{}
 		err = getPeeves(&peeves, user.Id)
-		switch err {
-		case nil:
-			break
-		default:
+		if err != nil {
 			http.Error(w, http.StatusText(500), 500)
 			log.Panic(err)
 			return // stop
@@ -293,6 +352,7 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 			// as this is the root no parent
 			User: user.Id, // create a peeve == owner
 			Body: f["body"][0],
+			Timestamp: time.Now(),
 		})
 		if err != nil {
 			log.Panic(err)
@@ -302,6 +362,26 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
+	var username string
+	session, err := rstore.Get(r, "wam")
+	if err != nil {
+		log.Panic(err)
+	}
+	switch v := session.Values["username"].(type) {
+	case string:
+		if v != c.URLParams["username"]{
+			// user is trying to delete a peeve which they do not own
+			http.Redirect(w,r,"/"+c.URLParams["username"],302)
+			return // stop
+		}else{
+			username = v
+			break
+		}
+	default:
+		// unknown is trying to delete a peeve which they do not own
+		http.Redirect(w,r,"/"+c.URLParams["username"],302)
+		return // stop
+	}
 	r.ParseForm() // translate form
 	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
 	// don't do anything before we know the form is what we want
@@ -310,11 +390,10 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	case f["id"] == nil, len(f["id"]) != 1, len(f["id"][0]) != 24:
 		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
 			"Error": "Invalid Id",
+			"SessionUsername": username,
+			"Session": session,
 		})
-		switch err {
-		case nil:
-			break
-		default:
+		if err != nil {
 			log.Panic(err)
 			return // stop
 		}
@@ -326,13 +405,12 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 			break
 		case mgo.ErrNotFound:
 			err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
-				"Number":"404",
-				"Body":"Not Found",
+				"Number": "404",
+				"Body": "Not Found",
+				"SessionUsername": username,
+				"Session": session,
 			})
-			switch err {
-			case nil:
-				break
-			default:
+			if err != nil {
 				log.Panic(err)
 				return // stop
 			}
@@ -342,10 +420,7 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 			return // stop
 		}
 		err = dropPeeve(f["id"][0], user.Id)
-		switch err {
-		case nil:
-			break
-		default:
+		if err != nil {
 			log.Panic(err)
 			return // stop
 		}
@@ -354,6 +429,12 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func Search(w http.ResponseWriter, r *http.Request) {
+	var username string
+	session, err := rstore.Get(r, "wam")
+	if err != nil {
+		log.Panic(err)
+	}
+	username, _ = session.Values["username"].(string)
 	r.ParseForm() // translate form
 	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
 	// TODO: actually search something instead of just redirect to <user>
@@ -361,13 +442,11 @@ func Search(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case f["q"]==nil, len(f["q"]) != 1, f["q"][0] == "":
 		err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
-			"Number":"404",
-			"Body":"Not Found",
+			"Number": "404",
+			"Body": "Not Found",
+			"SessionUsername": username,
 		})
-		switch err {
-		case nil:
-			break
-		default:
+		if err != nil {
 			log.Panic(err)
 			return // stop
 		}
