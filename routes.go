@@ -98,6 +98,15 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 			log.Panic(err)
 		}
 		return // stop
+	// max username length 13
+	case len(f["username"][0]) > 13:
+		err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
+			"Error": "Username too long",
+		})
+		if err != nil {
+			log.Panic(err)
+		}
+		return // stop
 	// if the two passwords don't match
 	case f["password"][0] != f["password"][1]:
 		err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
