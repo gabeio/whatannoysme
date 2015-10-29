@@ -142,6 +142,9 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 			}
 			session.Values["username"] = f["username"][0]
 			session.Values["hash"] = string(hash)
+			if err = session.Save(r, w) ; err != nil {
+				log.Panic("Error saving session: %v", err)
+			}
 			http.Redirect(w, r, "/"+f["username"][0], 302)
 			return // stop
 		}else{
