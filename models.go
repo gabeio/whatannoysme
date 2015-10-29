@@ -23,5 +23,6 @@ type (
 		Parent bson.ObjectId `bson:"parent,omitempty"` // person +1 toward the root
 		User bson.ObjectId `bson:"user"` // the user who owns this copy/peeve
 		Body string `bson:"body"`
+		Timestamp time.Time `bson:"timestamp"`
 	}
 )
