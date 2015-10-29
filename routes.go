@@ -267,6 +267,7 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 			"Number": "404",
 			"Body": "Not Found",
 			"SessionUsername": username,
+			"Session": session,
 		})
 		if err != nil {
 			log.Panic(err)
@@ -285,6 +286,7 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 		"Peeves": peeves,
 		"User": user,
 		"SessionUsername": username,
+		"Session": session,
 	})
 	if err != nil {
 		log.Panic(err)
@@ -320,6 +322,7 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
 			"Error": "Invalid Body",
 			"SessionUsername": username,
+			"Session": session,
 		})
 		if err != nil {
 			log.Panic(err)
@@ -329,6 +332,7 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
 			"Error": "Peeve Too Long",
 			"SessionUsername": username,
+			"Session": session,
 		})
 		if err != nil {
 			log.Panic(err)
@@ -345,6 +349,7 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 				"Number": "404",
 				"Body": "Not Found",
 				"SessionUsername": username,
+				"Session": session,
 			})
 			if err != nil {
 				log.Panic(err)
@@ -461,6 +466,7 @@ func Search(w http.ResponseWriter, r *http.Request) {
 			"Number": "404",
 			"Body": "Not Found",
 			"SessionUsername": username,
+			"Session": session,
 		})
 		if err != nil {
 			log.Panic(err)
