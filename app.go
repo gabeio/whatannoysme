@@ -57,6 +57,7 @@ func main() {
 	goji.Get("/", IndexTemplate)
 	goji.Get("/login", LoginTemplate)
 	goji.Post("/login", Login)
+	goji.Get("/logout", Logout) // REMOVE THIS!
 	goji.Post("/logout", Logout)
 	goji.Get("/signup", SignupTemplate)
 	goji.Post("/signup", CreateUser)
