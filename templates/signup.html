@@ -1,5 +1,5 @@
 {{ define "signup" }}
-{{ template "head" }}
+{{ template "head" . }}
 			<div class="col-xs-12 col-sm-12 col-md-12 col-lg-10 col-lg-offset-1">
 				<form class="form-horizontal" method="POST" enctype="multipart/form-data">
 					{{ if .Csrf }}<input type="hidden" name="_csrf" value="{{ .Csrf }}" />{{ end }}
@@ -54,5 +54,5 @@
 					</div>
 				</form>
 			</div>
-{{ template "foot" }}
+{{ template "foot" . }}
 {{ end }}
