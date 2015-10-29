@@ -87,11 +87,11 @@ func getRediStore() *redistore.RediStore {
 	return redisStore
 }
 
-func getUser(user interface{}, username string) error {
+func getUser(username string, user interface{}) error {
 	return muser.Find(bson.M{"username": username}).One(user)
 }
 
-func getPeeves(peeves interface{}, userId bson.ObjectId) error {
+func getPeeves(userId bson.ObjectId, peeves interface{}) error {
 	return mpeeve.Find(bson.M{"user": userId}).All(peeves)
 }
 

@@ -258,7 +258,7 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 	username, _ := session.Values["username"]
 	user := user{}
 	peeves := []peeve{}
-	err = getUser(&user, c.URLParams["username"])
+	err = getUser(c.URLParams["username"], &user)
 	switch err {
 	case nil:
 		break
@@ -277,7 +277,7 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 		log.Panic(err)
 		return // stop
 	}
-	err = getPeeves(&peeves, user.Id)
+	err = getPeeves(user.Id, &peeves)
 	if err != nil {
 		log.Panic(err)
 		return // stop
@@ -340,7 +340,7 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		return // stop
 	default:
 		user := user{}
-		err = getUser(&user, c.URLParams["username"])
+		err = getUser(c.URLParams["username"], &user)
 		switch err {
 		case nil:
 			break
@@ -361,7 +361,7 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 			return // stop
 		}
 		peeves := []peeve{}
-		err = getPeeves(&peeves, user.Id)
+		err = getPeeves(user.Id, &peeves)
 		if err != nil {
 			http.Error(w, http.StatusText(500), 500)
 			log.Panic(err)
@@ -420,7 +420,7 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 	default:
 		user := user{}
-		err = getUser(&user, c.URLParams["username"])
+		err = getUser(c.URLParams["username"], &user)
 		switch err {
 		case nil:
 			break
