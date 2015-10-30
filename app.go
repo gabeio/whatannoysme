@@ -34,6 +34,7 @@ var (
 	bcryptStrength int = 12
 	pwd string // present working directory
 	err error
+	errs = make(chan error)
 )
 
 func main() {
@@ -52,7 +53,9 @@ func main() {
 	// further db insides
 	mdb = msess.DB(os.Getenv("MONGO_DB"))
 	muser = mdb.C("user")
+	muser.EnsureIndexKey("username")
 	mpeeve = mdb.C("peeve")
+	mpeeve.EnsureIndexKey("body")
 	goji.Use(textHtml) // serve text/html
 	goji.Get("/", IndexTemplate)
 	goji.Get("/login", LoginTemplate)

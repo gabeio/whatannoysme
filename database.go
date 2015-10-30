@@ -87,40 +87,36 @@ func getRediStore() *redistore.RediStore {
 	return redisStore
 }
 
-func getUser(username string, user interface{}) error {
-	return muser.Find(bson.M{"username": username}).One(user)
+func createUser(user interface{}, done chan error) {
+	done <- muser.Insert(user)
 }
 
-func searchUser(query string, users interface{}) error {
+func getUser(username string, user interface{}, done chan error) {
+	done <- muser.Find(bson.M{"username": username}).One(user)
+}
+
+func searchUser(query string, users interface{}, done chan error) {
 	muser.EnsureIndexKey("username")
-	err = muser.Find(bson.M{"$text": bson.M{"$search": query}}).All(users)
-	if err != nil {
-		return err
-	}
-	// only return nil if no errors
-	return nil
+	done <- muser.Find(bson.M{"$text": bson.M{"$search": query}}).All(users)
 }
 
-func getPeeves(userId bson.ObjectId, peeves interface{}) error {
-	return mpeeve.Find(bson.M{"user": userId}).All(peeves)
+func createPeeve(peeves interface{}, done chan error) {
+	done <- mpeeve.Insert(peeves)
 }
 
-func searchPeeve(query string, peeves interface{}) error {
-	muser.EnsureIndexKey("body")
-	err = mpeeve.Find(bson.M{"$text": bson.M{"$search": query}}).All(peeves)
-	if err != nil {
-		return err
-	}
-	// only return nil if no errors
-	return nil
+func getPeeves(userId bson.ObjectId, peeves interface{}, done chan error) {
+	done <- mpeeve.Find(bson.M{"user": userId}).All(peeves)
 }
 
-func dropPeeve(peeveId string, userId bson.ObjectId) error {
-	peeve := peeve{}
-	err = mpeeve.Find(bson.M{"_id":bson.ObjectIdHex(peeveId), "user": userId}).One(&peeve)
-	if err != nil {
-		log.Panic(err)
-	}
-	return mpeeve.Remove(&peeve)
-	// return err
+func getOnePeeve(peeveId string, userId bson.ObjectId, peeve interface{}, done chan error) {
+	done <- mpeeve.Find(bson.M{"_id":bson.ObjectIdHex(peeveId), "user": userId}).One(peeve)
+}
+
+func searchPeeve(query string, peeves interface{}, done chan error) {
+	mpeeve.EnsureIndexKey("body")
+	done <- mpeeve.Find(bson.M{"$text": bson.M{"$search": query}}).All(peeves)
+}
+
+func dropPeeve(peeve interface{}, done chan error) {
+	done <- mpeeve.Remove(peeve)
 }
