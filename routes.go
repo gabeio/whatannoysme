@@ -121,33 +121,7 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 		f["username"][0] = strings.ToLower(f["username"][0])
 		var i int
 		i, err = muser.Find(bson.M{"username": f["username"][0]}).Count()
-		if i < 1 {
-			hash, err := bcrypt.GenerateFromPassword(
-				[]byte(f["password"][0]), bcryptStrength)
-			if err != nil {
-				log.Panic(err)
-				return // stop
-			}
-			err = muser.Insert(&user{
-				Id: bson.NewObjectId(),
-				Username: f["username"][0],
-				Hash: string(hash),
-				Email: f["email"][0],
-				Joined: time.Now(),
-			})
-			if err != nil {
-				log.Panic(err)
-				io.WriteString(w, "There was an error... Where did it go?")
-				return // stop
-			}
-			session.Values["username"] = f["username"][0]
-			session.Values["hash"] = string(hash)
-			if err = session.Save(r, w) ; err != nil {
-				log.Panic("Error saving session: %v", err)
-			}
-			http.Redirect(w, r, "/"+f["username"][0], 302)
-			return // stop
-		}else{
+		if i > 1 {
 			err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
 				"Error": "Username taken",
 			})
@@ -156,6 +130,31 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 			}
 			return // stop
 		}
+		hash, err := bcrypt.GenerateFromPassword(
+			[]byte(f["password"][0]), bcryptStrength)
+		if err != nil {
+			log.Panic(err)
+			return // stop
+		}
+		go createUser(&user{
+			Id: bson.NewObjectId(),
+			Username: f["username"][0],
+			Hash: string(hash),
+			Email: f["email"][0],
+			Joined: time.Now(),
+		}, errs)
+		if <-errs != nil {
+			http.Error(w, http.StatusText(500), 500)
+			log.Panic(<-errs)
+			return // stop
+		}
+		session.Values["username"] = f["username"][0]
+		session.Values["hash"] = string(hash)
+		if err = session.Save(r, w) ; err != nil {
+			log.Panic("Error saving session: %v", err)
+		}
+		http.Redirect(w, r, "/"+f["username"][0], 302)
+		return // stop
 	}
 }
 
@@ -192,8 +191,8 @@ func Login(c web.C, w http.ResponseWriter, r *http.Request) {
 	default:
 		f["username"][0] = strings.ToLower(f["username"][0])
 		user := user{}
-		err = muser.Find(bson.M{"username": f["username"][0]}).One(&user)
-		switch err {
+		go getUser(f["username"][0], &user, errs)
+		switch <-errs {
 		case nil:
 			break
 		case mgo.ErrNotFound:
@@ -206,7 +205,7 @@ func Login(c web.C, w http.ResponseWriter, r *http.Request) {
 			}
 			return // stop
 		default:
-			log.Panic(err)
+			log.Panic(<-errs)
 			return // stop
 		}
 		// user found
@@ -258,8 +257,8 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 	username, _ := session.Values["username"]
 	user := user{}
 	peeves := []peeve{}
-	err = getUser(c.URLParams["username"], &user)
-	switch err {
+	go getUser(c.URLParams["username"], &user, errs)
+	switch <-errs {
 	case nil:
 		break
 	case mgo.ErrNotFound:
@@ -274,12 +273,12 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 		return // stop
 	default:
-		log.Panic(err)
+		log.Panic(<-errs)
 		return // stop
 	}
-	err = getPeeves(user.Id, &peeves)
-	if err != nil {
-		log.Panic(err)
+	go getPeeves(user.Id, &peeves, errs)
+	if <-errs != nil {
+		log.Panic(<-errs)
 		return // stop
 	}
 	err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
@@ -340,8 +339,8 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		return // stop
 	default:
 		user := user{}
-		err = getUser(c.URLParams["username"], &user)
-		switch err {
+		go getUser(c.URLParams["username"], &user, errs)
+		switch <-errs {
 		case nil:
 			break
 		case mgo.ErrNotFound:
@@ -357,26 +356,19 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 			return // stop
 		default:
 			http.Error(w, http.StatusText(500), 500)
-			log.Panic(err)
+			log.Panic(<-errs)
 			return // stop
 		}
-		peeves := []peeve{}
-		err = getPeeves(user.Id, &peeves)
-		if err != nil {
-			http.Error(w, http.StatusText(500), 500)
-			log.Panic(err)
-			return // stop
-		}
-		err = mpeeve.Insert(&peeve{
+		go createPeeve(&peeve{
 			Id: bson.NewObjectId(),
 			Root: user.Id,
 			// as this is the root no parent
 			User: user.Id, // create a peeve == owner
 			Body: f["body"][0],
 			Timestamp: time.Now(),
-		})
-		if err != nil {
-			log.Panic(err)
+		}, errs)
+		if <-errs != nil {
+			log.Panic(<-errs)
 		}
 		http.Redirect(w,r,"/"+c.URLParams["username"],302)
 	}
@@ -420,8 +412,8 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 	default:
 		user := user{}
-		err = getUser(c.URLParams["username"], &user)
-		switch err {
+		go getUser(c.URLParams["username"], &user, errs)
+		switch <-errs {
 		case nil:
 			break
 		case mgo.ErrNotFound:
@@ -437,12 +429,18 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 			}
 		default:
 			http.Error(w, http.StatusText(500), 500)
-			log.Panic(err)
+			log.Panic(<-errs)
 			return // stop
 		}
-		err = dropPeeve(f["id"][0], user.Id)
-		if err != nil {
-			log.Panic(err)
+		peeve := peeve{}
+		go getOnePeeve(f["id"][0], user.Id, &peeve, errs)
+		if <-errs != nil {
+			log.Panic(<-errs)
+			return
+		}
+		go dropPeeve(&peeve, errs)
+		if <-errs != nil {
+			log.Panic(<-errs)
 			return // stop
 		}
 		http.Redirect(w,r,"/"+c.URLParams["username"],302)
@@ -475,11 +473,21 @@ func Search(w http.ResponseWriter, r *http.Request) {
 	case f["q"]!=nil, len(f["q"]) == 1:
 		users := []user{}
 		peeves := []peeve{}
-		err = searchUser(f["q"][0], &users)
-		err = searchPeeve(f["q"][0], &peeves)
-		if err != nil {
-			log.Panic(err)
+		go searchUser(f["q"][0], &users, errs)
+		if <-errs != nil {
 			http.Error(w, http.StatusText(500), 500)
+			log.Panic(<-errs)
+			return // stop
+		}
+		go searchPeeve(f["q"][0], &peeves, errs)
+		switch <-errs {
+		case nil:
+			break // nil is good
+		case mgo.ErrNotFound:
+			break // not found is okay for searching
+		default:
+			http.Error(w, http.StatusText(500), 500)
+			log.Panic(<-errs)
 			return // stop
 		}
 		log.Print(users)
