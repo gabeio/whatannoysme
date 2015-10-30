@@ -22,6 +22,7 @@ type (
 		Root bson.ObjectId `bson:"root"` // original user to create the peeve
 		Parent bson.ObjectId `bson:"parent,omitempty"` // person +1 toward the root
 		User bson.ObjectId `bson:"user"` // the user who owns this copy/peeve
+		Username bson.ObjectId
 		Body string `bson:"body"`
 		Timestamp time.Time `bson:"timestamp"`
 	}

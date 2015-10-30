@@ -489,8 +489,6 @@ func Search(w http.ResponseWriter, r *http.Request) {
 			log.Panic(<-errs)
 			return // stop
 		}
-		log.Print(users)
-		log.Print(peeves)
 		err = temps.ExecuteTemplate(w, "search", map[string]interface{}{
 			"Users": users,
 			"Peeves": peeves,

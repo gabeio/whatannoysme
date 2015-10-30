@@ -26,7 +26,7 @@
 							<ul class="list-group">
 	{{ range .Users }}
 		{{ with . }}
-								<li class="list-group-item"><a href="/{{ .Username }}">{{ .Username }}</a></li><!-- don't show buttons for outside user -->
+								<a href="{{ .Username }}" class="list-group-item">{{ .Username }}</a><!-- don't show buttons for outside user -->
 		{{ end }}
 	{{ end }}
 							</div>
@@ -44,28 +44,7 @@
 							<ul class="list-group">
 	{{ range .Peeves }}
 		{{ with . }}
-			{{ if $.SessionUsername }}
-				{{ if eq $.SessionUsername $.User.Username }}
-								<li class="list-group-item">
-									<form action="/{{ $.User.Username }}/delete" method="POST" enctype="multipart/form-data">
-										<input type="hidden" id="id" name="id" value="{{ .Id.Hex }}" />
-										{{ .Body }}
-										<button type="submit" class="hides peekaboo list-btn-right btn btn-default pull-right">Me Too!</button>
-									</form>
-								</li>
-				{{ else }}
-								<li class="list-group-item">
-									<form action="/metoo" method="POST" enctype="multipart/form-data">
-										<input type="hidden" id="user" name="user" value="{{ .User.Hex }}" /><!-- this is the current copy owner -->
-										<input type="hidden" id="id" name="id" value="{{ .Id.Hex }}" /><!-- this is the peeve id @ owner copy -->
-										{{ .Body }}
-										<button type="submit" class="hides peekaboo list-btn-right btn btn-default pull-right">Me Too!</button>
-									</form>
-								</li>
-				{{ end }}
-			{{ else }}
-								<li class="list-group-item">{{ .Body }}</li><!-- don't show buttons for outside user -->
-			{{ end }}
+								<a href="/{{ .User.string }}" class="list-group-item">{{ .Body }}</a>
 		{{ end }}
 	{{ end }}
 							</ul>
