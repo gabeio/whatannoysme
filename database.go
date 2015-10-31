@@ -26,14 +26,14 @@ func getMgoSession() *mgo.Session {
 		os.Getenv("MONGO_PASS") != "" &&
 		os.Getenv("MONGO_PORT_27017_TCP_ADDR") != "" &&
 		os.Getenv("MONGO_PORT_27017_TCP_PORT") != "":
-		mgourl = "mongodb://"+os.Getenv("MONGO_USER")+":"+
-			os.Getenv("MONGO_PASS")+"@"+
-			os.Getenv("MONGO_PORT_27017_TCP_ADDR")+":"+
+		mgourl = "mongodb://" + os.Getenv("MONGO_USER") + ":" +
+			os.Getenv("MONGO_PASS") + "@" +
+			os.Getenv("MONGO_PORT_27017_TCP_ADDR") + ":" +
 			os.Getenv("MONGO_PORT_27017_TCP_PORT")
 	case os.Getenv("MONGO_PORT_27017_TCP_ADDR") != "" &&
 		os.Getenv("MONGO_PORT_27017_TCP_PORT") != "":
-		mgourl = "mongodb://"+
-			os.Getenv("MONGO_PORT_27017_TCP_ADDR")+":"+
+		mgourl = "mongodb://" +
+			os.Getenv("MONGO_PORT_27017_TCP_ADDR") + ":" +
 			os.Getenv("MONGO_PORT_27017_TCP_PORT")
 	}
 	session, err := mgo.Dial(mgourl)
@@ -71,12 +71,12 @@ func getRediStore() *redistore.RediStore {
 	case os.Getenv("REDIS_PASS") != "" &&
 		os.Getenv("REDIS_PORT_6379_TCP_ADDR") != "" &&
 		os.Getenv("REDIS_PORT_6379_TCP_PORT") != "":
-		redisHostPort = os.Getenv("REDIS_PORT_6379_TCP_ADDR")+":"+
+		redisHostPort = os.Getenv("REDIS_PORT_6379_TCP_ADDR") + ":" +
 			os.Getenv("REDIS_PORT_6379_TCP_PORT")
 		redisPassword = os.Getenv("REDIS_PASS")
 	case os.Getenv("REDIS_PORT_6379_TCP_ADDR") != "" &&
 		os.Getenv("REDIS_PORT_6379_TCP_PORT") != "":
-		redisHostPort = os.Getenv("REDIS_PORT_6379_TCP_ADDR")+":"+
+		redisHostPort = os.Getenv("REDIS_PORT_6379_TCP_ADDR") + ":" +
 			os.Getenv("REDIS_PORT_6379_TCP_PORT")
 	}
 	redisStore, err := redistore.NewRediStore(redisClients, "tcp",
@@ -109,7 +109,7 @@ func getPeeves(userId bson.ObjectId, peeves interface{}, done chan error) {
 }
 
 func getOnePeeve(peeveId string, userId bson.ObjectId, peeve interface{}, done chan error) {
-	done <- mpeeve.Find(bson.M{"_id":bson.ObjectIdHex(peeveId), "user": userId}).One(peeve)
+	done <- mpeeve.Find(bson.M{"_id": bson.ObjectIdHex(peeveId), "user": userId}).One(peeve)
 }
 
 func searchPeeve(query string, peeves interface{}, done chan error) {

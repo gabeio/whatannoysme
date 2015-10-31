@@ -118,8 +118,7 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 	// otherwise regester user
 	default:
 		f["username"][0] = strings.ToLower(f["username"][0])
-		var i int
-		i, err = muser.Find(bson.M{"username": f["username"][0]}).Count()
+		i, err := muser.Find(bson.M{"username": f["username"][0]}).Count()
 		if i > 1 {
 			err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
 				"Error": "Username taken",
@@ -149,7 +148,7 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 		session.Values["username"] = f["username"][0]
 		session.Values["hash"] = string(hash)
-		if err = session.Save(r, w) ; err != nil {
+		if err = session.Save(r, w); err != nil {
 			log.Panic("Error saving session: %v", err)
 		}
 		http.Redirect(w, r, "/"+f["username"][0], 302)
@@ -229,10 +228,10 @@ func Login(c web.C, w http.ResponseWriter, r *http.Request) {
 		// correct password
 		session.Values["username"] = f["username"][0]
 		session.Values["hash"] = user.Hash
-		if err = session.Save(r, w) ; err != nil {
+		if err = session.Save(r, w); err != nil {
 			log.Panic("Error saving session: %v", err)
 		}
-		http.Redirect(w,r,"/"+f["username"][0],302)
+		http.Redirect(w, r, "/"+f["username"][0], 302)
 	}
 }
 
@@ -245,7 +244,7 @@ func Logout(c web.C, w http.ResponseWriter, r *http.Request) {
 	if err = session.Save(r, w); err != nil {
 		log.Panic("Error saving session: %v", err)
 	}
-	http.Redirect(w,r,"/",302)
+	http.Redirect(w, r, "/", 302)
 }
 
 func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -300,15 +299,15 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 	switch v := session.Values["username"].(type) {
 	case string:
-		if v != c.URLParams["username"]{
-			http.Redirect(w,r,"/"+c.URLParams["username"],302)
+		if v != c.URLParams["username"] {
+			http.Redirect(w, r, "/"+c.URLParams["username"], 302)
 			return // stop
-		}else{
+		} else {
 			username = v
 			break
 		}
 	default:
-		http.Redirect(w,r,"/"+c.URLParams["username"],302)
+		http.Redirect(w, r, "/"+c.URLParams["username"], 302)
 		return // stop
 	}
 	r.ParseForm() // translate form
@@ -316,7 +315,7 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	// don't do anything before we know the form is what we want
 	f := r.Form
 	switch {
-	case f["body"]==nil, len(f["body"]) != 1, f["body"][0] == "":
+	case f["body"] == nil, len(f["body"]) != 1, f["body"][0] == "":
 		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
 			"Error": "Invalid Body",
 			"SessionUsername": username,
@@ -369,7 +368,7 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		if <-errs != nil {
 			log.Panic(<-errs)
 		}
-		http.Redirect(w,r,"/"+c.URLParams["username"],302)
+		http.Redirect(w, r, "/"+c.URLParams["username"], 302)
 	}
 }
 
@@ -381,17 +380,17 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 	switch v := session.Values["username"].(type) {
 	case string:
-		if v != c.URLParams["username"]{
+		if v != c.URLParams["username"] {
 			// user is trying to delete a peeve which they do not own
-			http.Redirect(w,r,"/"+c.URLParams["username"],302)
+			http.Redirect(w, r, "/"+c.URLParams["username"], 302)
 			return // stop
-		}else{
+		} else {
 			username = v
 			break
 		}
 	default:
 		// unknown is trying to delete a peeve which they do not own
-		http.Redirect(w,r,"/"+c.URLParams["username"],302)
+		http.Redirect(w, r, "/"+c.URLParams["username"], 302)
 		return // stop
 	}
 	r.ParseForm() // translate form
@@ -442,7 +441,7 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 			log.Panic(<-errs)
 			return // stop
 		}
-		http.Redirect(w,r,"/"+c.URLParams["username"],302)
+		http.Redirect(w, r, "/"+c.URLParams["username"], 302)
 	}
 }
 
@@ -458,7 +457,7 @@ func Search(w http.ResponseWriter, r *http.Request) {
 	// TODO: actually search something instead of just redirect to <user>
 	f := r.Form
 	switch {
-	case f["q"]==nil, len(f["q"]) != 1:
+	case f["q"] == nil, len(f["q"]) != 1:
 		err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
 			"Number": "404",
 			"Body": "Not Found",
@@ -469,11 +468,16 @@ func Search(w http.ResponseWriter, r *http.Request) {
 			log.Panic(err)
 			return // stop
 		}
-	case f["q"]!=nil, len(f["q"]) == 1:
+	case f["q"] != nil, len(f["q"]) == 1:
 		users := []user{}
 		peeves := []peeve{}
 		go searchUser(f["q"][0], &users, errs)
-		if <-errs != nil {
+		switch <-errs {
+		case nil:
+			break // nil is good
+		case mgo.ErrNotFound:
+			break // not found is okay for searching
+		default:
 			http.Error(w, http.StatusText(500), 500)
 			log.Panic(<-errs)
 			return // stop

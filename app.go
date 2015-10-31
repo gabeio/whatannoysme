@@ -21,9 +21,8 @@ import (
 
 var (
 	// cache all templates
-	temps *template.Template =
-		template.Must(template.ParseGlob(os.Getenv("GOPATH")+
-			"/src/github.com/gabeio/whatannoysme/templates/*.html"))
+	temps *template.Template = template.Must(template.ParseGlob(os.Getenv("GOPATH") +
+		"/src/github.com/gabeio/whatannoysme/templates/*.html"))
 	msess *mgo.Session // mongo connection
 	mdb *mgo.Database // database
 	muser *mgo.Collection // user collection
@@ -49,7 +48,7 @@ func main() {
 	// redis session connect
 	rstore = getRediStore()
 	defer rstore.Close()
-	rstore.SetMaxAge(7*24*3600) // 7 days
+	rstore.SetMaxAge(7 * 24 * 3600) // 7 days
 	// further db insides
 	mdb = msess.DB(os.Getenv("MONGO_DB"))
 	muser = mdb.C("user")
@@ -75,7 +74,7 @@ func main() {
 func getSocket() string {
 	if os.Getenv("SOCKET") != "" {
 		return os.Getenv("SOCKET")
-	}else{
+	} else {
 		return ":8080"
 	}
 }
