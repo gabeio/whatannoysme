@@ -63,6 +63,7 @@ func main() {
 	goji.Post("/logout", Logout)
 	goji.Get("/signup", SignupTemplate)
 	goji.Post("/signup", CreateUser)
+	goji.Get("/search", Search)
 	goji.Post("/search", Search)
 	goji.Get("/:username", GetPeeves)
 	goji.Post("/:username/create", CreatePeeve)
