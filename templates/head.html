@@ -65,12 +65,14 @@
 					</ul>
 					<!-- Right Navbar -->
 					<ul class="nav navbar-nav navbar-right">
-						{{ if .SessionUsername }}
+{{ if .SessionUsername }}
+	<!-- user is logged in -->
 						<li><a title=".SessionUsername">{{ .SessionUsername }}</a></li>
-						{{ else }}
+{{ else }}
+	<!-- user is not logged in -->
 						<li><a href="/signup">Signup</a></li>
 						<li><a href="/login">Login</a></li>
-						{{ end }}
+{{ end }}
 						<li class="dropdown">
 							<a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-cog"></span> <span class="caret"></span></a>
 							<ul class="dropdown-menu">

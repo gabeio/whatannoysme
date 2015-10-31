@@ -4,19 +4,22 @@
 					<div class="row">
 						<div class="col-sm-12">
 {{ if .SessionUsername }}
-	{{ if .User }}
-		{{ if eq .SessionUsername .User.Username }}
+	<!-- user is logged in -->
+	{{ if eq .SessionUsername .User.Username }}
+		<!-- user is this user -->
 							<h2>Your Pet Peeves</h2>
-		{{ else }}
+	{{ else }}
+		<!-- user is not this user -->
 							<h2>{{ .User.Username }}'s Pet Peeves</h2>
-		{{ end }}
 	{{ end }}
 {{ else }}
+	<!-- user is not logged in -->
 							<h2>{{ .User.Username }}'s Pet Peeves</h2>
 {{ end }}
 						</div>
 					</div>
-					{{ if .Error }}
+{{ if .Error }}
+	<!-- error -->
 					<div class="row">
 						<div class="col-sm-12">
 							<div class="alert alert-danger" role="alert">
@@ -24,13 +27,14 @@
 							</div>
 						</div>
 					</div>
-					{{ end }}
+{{ end }}
 					<div class="row">
 						<div class="col-sm-12">
 							<ul class="list-group">
 {{ if .SessionUsername }}
-	{{ if .User }}
-		{{ if eq .SessionUsername .User.Username }}
+	<!-- user is logged in -->
+	{{ if eq .SessionUsername .User.Username }}
+		<!-- user is this user -->
 								<li class="list-group-item">
 									<form action="/{{ .User.Username }}/create" method="POST" enctype="multipart/form-data">
 										<span class="input-group">
@@ -41,14 +45,15 @@
 										</span>
 									</form>
 								</li>
-		{{ end }}
 	{{ end }}
 {{ end }}
 {{ if .Peeves }}
 	{{ range .Peeves }}
 		{{ with . }}
 			{{ if $.SessionUsername }}
+				<!-- user is logged in -->
 				{{ if eq $.SessionUsername $.User.Username }}
+					<!-- user is this user -->
 								<li class="list-group-item">
 									<form action="/{{ $.User.Username }}/delete" method="POST" enctype="multipart/form-data">
 										<input type="hidden" id="id" name="id" value="{{ .Id.Hex }}" />
@@ -57,6 +62,7 @@
 									</form>
 								</li>
 				{{ else }}
+					<!-- user is not this user -->
 								<li class="list-group-item">
 									<form action="/metoo" method="POST" enctype="multipart/form-data">
 										<input type="hidden" id="user" name="user" value="{{ .UserId.Hex }}" /><!-- this is the current copy owner -->
@@ -67,6 +73,7 @@
 								</li>
 				{{ end }}
 			{{ else }}
+				<!-- user is not logged in -->
 								<li class="list-group-item">{{ .Body }}</li>
 			{{ end }}
 		{{ end }}
@@ -77,5 +84,4 @@
 					</div>
 				</div>
 			</div>
-{{ template "foot" . }}
-{{ end }}
+{{ template "foot" . }}{{ end }}

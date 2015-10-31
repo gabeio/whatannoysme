@@ -1,5 +1,4 @@
-{{ define "login" }}
-{{ template "head" . }}
+{{ define "login" }}{{ template "head" . }}
 			<div class="col-xs-12 col-sm-12 col-md-12 col-lg-10 col-lg-offset-1">
 				<form class="form-horizontal" method="POST" enctype="multipart/form-data">
 					<input type="hidden" name="_csrf" value="{{ .Csrf }}" />
@@ -8,13 +7,14 @@
 							<h2>Login</h2>
 						</div>
 					</div>
-					{{ if .Error }}
+{{ if .Error }}
+	<!-- error -->
 					<div class="form-group">
 						<div class="alert alert-danger" role="alert">
-							{{ .Error}}
+							{{ .Error }}
 						</div>
 					</div>
-					{{ end }}
+{{ end }}
 					<div class="form-group">
 						<div class="col-sm-2">
 							<label for="formUsername">Username</label>
@@ -38,5 +38,4 @@
 					</div>
 				</form>
 			</div>
-{{ template "foot" . }}
-{{ end }}
+{{ template "foot" . }}{{ end }}

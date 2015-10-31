@@ -6,7 +6,8 @@
 							<h2>Search</h2>
 						</div>
 					</div>
-					{{ if .Error }}
+{{ if .Error }}
+	<!-- error -->
 					<div class="row">
 						<div class="col-sm-12">
 							<div class="alert alert-danger" role="alert">
@@ -14,7 +15,7 @@
 							</div>
 						</div>
 					</div>
-					{{ end }}
+{{ end }}
 {{ if .Users }}
 					<div class="row">
 						<div class="col-sm-12">
@@ -53,5 +54,4 @@
 {{ end }}
 				</div>
 			</div>
-{{ template "foot" . }}
-{{ end }}
+{{ template "foot" . }}{{ end }}
