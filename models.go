@@ -10,11 +10,13 @@ import (
 // MONGO MODELS
 type (
 	user struct {
-		Id       bson.ObjectId `bson:"_id"`
-		Username string        `bson:"username"`
-		Hash     string        `bson:"hash"`
-		Email    string        `bson:"email"`
-		Joined   time.Time     `bson:"joined"`
+		Id        bson.ObjectId `bson:"_id"`
+		Username  string        `bson:"username"`
+		Hash      string        `bson:"hash"`
+		FirstName string        `bson:"firstname"`
+		LastName  string        `bson:"lastname"`
+		Email     string        `bson:"email"`
+		Joined    time.Time     `bson:"joined"`
 	}
 
 	peeve struct {
