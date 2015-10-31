@@ -29,6 +29,10 @@ type (
 	}
 )
 
+func (u *user) FullName() string {
+	return user.FirstName+user.LastName
+}
+
 func (p *peeve) Username() string {
 	user := user{}
 	muser.FindId(p.UserId).One(&user)
