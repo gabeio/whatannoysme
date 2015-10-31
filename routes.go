@@ -361,7 +361,7 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 			Id: bson.NewObjectId(),
 			Root: user.Id,
 			// as this is the root no parent
-			User: user.Id, // create a peeve == owner
+			UserId: user.Id, // create a peeve == owner
 			Body: f["body"][0],
 			Timestamp: time.Now(),
 		}, errs)
