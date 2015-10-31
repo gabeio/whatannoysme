@@ -1,57 +1,53 @@
 {{ define "search" }}{{ template "head" . }}
 			<div class="row">
 				<div class="col-xs-12 col-sm-12 col-md-12 col-lg-10 col-lg-offset-1">
-					<div class="row">
-						<div class="col-sm-12">
-							<h2>Search</h2>
-						</div>
-					</div>
-{{ if .Error }}
-	<!-- error -->
-					<div class="row">
-						<div class="col-sm-12">
-							<div class="alert alert-danger" role="alert">
-								{{ .Error }}
-							</div>
-						</div>
-					</div>
-{{ end }}
-{{ if .Users }}
-					<div class="row">
-						<div class="col-sm-12">
-							<h2>Users:</h2>
-						</div>
-					</div>
-					<div class="row">
-						<div class="col-sm-12">
-							<ul class="list-group">
-	{{ range .Users }}
-		{{ with . }}
-								<a href="{{ .Username }}" class="list-group-item">{{ .Username }}</a><!-- don't show buttons for outside user -->
-		{{ end }}
-	{{ end }}
-							</div>
-						</div>
-					</div>
-{{ end }}
-{{ if .Peeves }}
-					<div class="row">
-						<div class="col-sm-12">
-							<h2>Pet Peeves:</h2>
-						</div>
-					</div>
-					<div class="row">
-						<div class="col-sm-12">
-							<ul class="list-group">
-	{{ range .Peeves }}
-		{{ with . }}
-								<a href="/{{ .Username }}" class="list-group-item">{{ .Body }}</a>
-		{{ end }}
-	{{ end }}
-							</ul>
-						</div>
-					</div>
-{{ end }}
+					<h2>Search</h2>
 				</div>
 			</div>
+{{ if .Error }}
+<!-- error -->
+			<div class="row">
+				<div class="col-xs-12 col-sm-12 col-md-12 col-lg-10 col-lg-offset-1">
+					<div class="alert alert-danger" role="alert">
+						{{ .Error }}
+					</div>
+				</div>
+			</div>
+{{ end }}
+{{ if .Users }}
+			<div class="row">
+				<div class="col-xs-12 col-sm-12 col-md-12 col-lg-10 col-lg-offset-1">
+					<h2>Users:</h2>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-xs-12 col-sm-12 col-md-12 col-lg-10 col-lg-offset-1">
+					<ul class="list-group">
+	{{ range .Users }}
+		{{ with . }}
+						<a href="{{ .Username }}" class="list-group-item">{{ .Username }}</a><!-- don't show buttons for outside user -->
+		{{ end }}
+	{{ end }}
+					</div>
+				</div>
+			</div>
+{{ end }}
+{{ if .Peeves }}
+			<div class="row">
+				<div class="col-xs-12 col-sm-12 col-md-12 col-lg-10 col-lg-offset-1">
+					<h2>Pet Peeves:</h2>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-xs-12 col-sm-12 col-md-12 col-lg-10 col-lg-offset-1">
+					<ul class="list-group">
+	{{ range .Peeves }}
+		{{ with . }}
+						<a href="/{{ .Username }}" class="list-group-item">{{ .Body }}</a>
+		{{ end }}
+	{{ end }}
+					</ul>
+				</div>
+			</div>
+{{ end }}
 {{ template "foot" . }}{{ end }}
