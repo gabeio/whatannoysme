@@ -22,8 +22,13 @@ type (
 		Root      bson.ObjectId `bson:"root"`             // original user to create the peeve
 		Parent    bson.ObjectId `bson:"parent,omitempty"` // person +1 toward the root
 		UserId    bson.ObjectId `bson:"user"`             // the user who owns this copy/peeve
-		Username  string        // Username of User
 		Body      string        `bson:"body"`
 		Timestamp time.Time     `bson:"timestamp"`
 	}
 )
+
+func (p *peeve) Username() string {
+	user := user{}
+	muser.FindId(p.UserId).One(&user)
+	return user.Username
+}

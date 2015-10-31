@@ -59,7 +59,7 @@
 				{{ else }}
 								<li class="list-group-item">
 									<form action="/metoo" method="POST" enctype="multipart/form-data">
-										<input type="hidden" id="user" name="user" value="{{ .User.Hex }}" /><!-- this is the current copy owner -->
+										<input type="hidden" id="user" name="user" value="{{ .UserId.Hex }}" /><!-- this is the current copy owner -->
 										<input type="hidden" id="id" name="id" value="{{ .Id.Hex }}" /><!-- this is the peeve id @ owner copy -->
 										{{ .Body }}
 										<button type="submit" class="hides peekaboo list-btn-right btn btn-default pull-right">Me Too!</button>

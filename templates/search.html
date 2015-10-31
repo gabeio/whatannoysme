@@ -44,7 +44,7 @@
 							<ul class="list-group">
 	{{ range .Peeves }}
 		{{ with . }}
-								<a href="/{{ .User.string }}" class="list-group-item">{{ .Body }}</a>
+								<a href="/{{ .Username }}" class="list-group-item">{{ .Body }}</a>
 		{{ end }}
 	{{ end }}
 							</ul>
