@@ -30,7 +30,7 @@ type (
 )
 
 func (u *user) FullName() string {
-	return user.FirstName+user.LastName
+	return u.FirstName+u.LastName
 }
 
 func (p *peeve) Username() string {
