@@ -82,7 +82,7 @@ func getRediStore() *redistore.RediStore {
 	redisStore, err := redistore.NewRediStore(redisClients, "tcp",
 		redisHostPort, redisPassword, []byte(os.Getenv("KEY")))
 	if err != nil {
-	    log.Panic(err)
+		log.Panic(err)
 	}
 	return redisStore
 }
@@ -96,7 +96,7 @@ func getUser(username string, user interface{}, done chan error) {
 }
 
 func searchUser(query string, users interface{}, done chan error) {
-	muser.EnsureIndexKey("username")
+	go muser.EnsureIndexKey("username")
 	done <- muser.Find(bson.M{"$text": bson.M{"$search": query}}).All(users)
 }
 
@@ -113,7 +113,7 @@ func getOnePeeve(peeveId string, userId bson.ObjectId, peeve interface{}, done c
 }
 
 func searchPeeve(query string, peeves interface{}, done chan error) {
-	mpeeve.EnsureIndexKey("body")
+	go mpeeve.EnsureIndexKey("body")
 	done <- mpeeve.Find(bson.M{"$text": bson.M{"$search": query}}).All(peeves)
 }
 
