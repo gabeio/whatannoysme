@@ -4,7 +4,6 @@ import (
 	"time"
 
 	// mgo.v2 bson
-	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 

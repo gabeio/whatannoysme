@@ -58,21 +58,13 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
-	var username string
 	session, err := rstore.Get(r, "wam")
 	if err != nil {
 		log.Panic(err)
+		// continue
 	}
-	switch v := session.Values["username"].(type) {
-	case string:
-		if v != c.URLParams["username"] {
-			http.Redirect(w, r, "/"+c.URLParams["username"], 302)
-			return // stop
-		} else {
-			username = v
-			break
-		}
-	default:
+	username, _ := session.Values["username"].(string)
+	if username != c.URLParams["username"] {
 		http.Redirect(w, r, "/"+c.URLParams["username"], 302)
 		return // stop
 	}
@@ -139,23 +131,13 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
-	var username string
 	session, err := rstore.Get(r, "wam")
 	if err != nil {
 		log.Panic(err)
+		// continue
 	}
-	switch v := session.Values["username"].(type) {
-	case string:
-		if v != c.URLParams["username"] {
-			// user is trying to delete a peeve which they do not own
-			http.Redirect(w, r, "/"+c.URLParams["username"], 302)
-			return // stop
-		} else {
-			username = v
-			break
-		}
-	default:
-		// unknown is trying to delete a peeve which they do not own
+	username, _ := session.Values["username"].(string)
+	if username != c.URLParams["username"] {
 		http.Redirect(w, r, "/"+c.URLParams["username"], 302)
 		return // stop
 	}
@@ -196,13 +178,7 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 			log.Panic(<-errs)
 			return // stop
 		}
-		peeve := peeve{}
-		go getOnePeeve(f["id"][0], user.Id, &peeve, errs)
-		if <-errs != nil {
-			log.Panic(<-errs)
-			return
-		}
-		go dropPeeve(&peeve, errs)
+		go dropPeeve(bson.ObjectIdHex(f["id"][0]), errs)
 		if <-errs != nil {
 			log.Panic(<-errs)
 			return // stop

@@ -117,6 +117,6 @@ func searchPeeve(query string, peeves interface{}, done chan error) {
 	done <- mpeeve.Find(bson.M{"$text": bson.M{"$search": query}}).All(peeves)
 }
 
-func dropPeeve(peeve interface{}, done chan error) {
-	done <- mpeeve.Remove(peeve)
+func dropPeeve(peeveId interface{}, done chan error) {
+	done <- mpeeve.RemoveId(peeveId)
 }
