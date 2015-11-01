@@ -68,6 +68,8 @@ func main() {
 	goji.Get("/:username", GetPeeves)
 	goji.Post("/:username/create", CreatePeeve)
 	goji.Post("/:username/delete", DeletePeeve)
+	goji.Get("/:username/settings", SettingsTemplate)
+	goji.Post("/:username/settings", Settings)
 	flag.Set("bind", getSocket()) // set port to listen on
 	goji.Serve()
 }

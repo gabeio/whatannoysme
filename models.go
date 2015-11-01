@@ -29,6 +29,16 @@ type (
 	}
 )
 
+// struct functions
+
+func (u *user) setFirstName(firstName string) (error) {
+	return muser.UpdateId(u.Id, bson.M{"$set": bson.M{"firstname": firstName}})
+}
+
+func (u *user) setLastName(lastName string) (error) {
+	return muser.UpdateId(u.Id, bson.M{"$set": bson.M{"lastname": lastName}})
+}
+
 func (u *user) FullName() string {
 	return u.FirstName+u.LastName
 }

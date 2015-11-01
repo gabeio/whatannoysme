@@ -56,6 +56,25 @@ func LoginTemplate(w http.ResponseWriter, r *http.Request) {
 	temps.ExecuteTemplate(w, "login", nil)
 }
 
+func SettingsTemplate(c web.C, w http.ResponseWriter, r *http.Request) {
+	session, err := rstore.Get(r, "wam")
+	if err != nil {
+		log.Panic(err)
+	}
+	username, _ := session.Values["username"].(string)
+	if username == "" {
+		// user is not logged in
+		http.Redirect(w, r, "/", 302)
+		return // stop
+	}
+	if username != c.URLParams["username"] {
+		// user is not this user
+		http.Redirect(w, r, "/"+username+"/settings", 302)
+		return // stop
+	}
+	temps.ExecuteTemplate(w, "settings", nil)
+}
+
 func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 	session, err := rstore.Get(r, "wam")
 	if err != nil {
@@ -245,6 +264,44 @@ func Logout(c web.C, w http.ResponseWriter, r *http.Request) {
 		log.Panic("Error saving session: %v", err)
 	}
 	http.Redirect(w, r, "/", 302)
+}
+
+func Settings(c web.C, w http.ResponseWriter, r *http.Request) {
+	session, err := rstore.Get(r, "wam")
+	if err != nil {
+		log.Panic(err)
+	}
+	username, _ := session.Values["username"].(string)
+	if username != c.URLParams["username"] {
+		// user is not this user
+		http.Redirect(w, r, "/"+c.URLParams["username"]+"/settings", 302)
+		return // stop
+	}
+	user := user{}
+	go getUser(c.URLParams["username"], &user, errs)
+	if <-errs != nil {
+		log.Panic(<-errs)
+		return // stop
+	}
+	r.ParseForm() // translate form
+	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
+	f := r.Form
+	if len(f) > 0 {
+		if len(f["first"]) == 1 {
+			user.setFirstName(f["first"][0])
+		}
+		if len(f["last"]) == 1 {
+			user.setLastName(f["last"][0])
+		}
+		if len(f["password"]) == 2 && f["password"][0] == f["password"][1] {
+			user.setPassword(f["password"][0])
+		}
+	}else{
+		http.Error(w, http.StatusText(500), 500)
+		return
+	}
+	http.Redirect(w, r, "/"+c.URLParams["username"]+"/settings", 302)
+	return // stop
 }
 
 func Search(w http.ResponseWriter, r *http.Request) {
