@@ -1,7 +1,11 @@
 package main
 
 import (
+	"log"
 	"time"
+
+	// golang.org/x/crypto
+	"golang.org/x/crypto/bcrypt"
 
 	// mgo.v2 bson
 	"gopkg.in/mgo.v2/bson"
@@ -39,6 +43,11 @@ func (u *user) setLastName(lastName string) (error) {
 	return muser.UpdateId(u.Id, bson.M{"$set": bson.M{"lastname": lastName}})
 }
 
+func (u *user) setPassword(password string) (error) {
+	return muser.UpdateId(u.Id,
+		bson.M{"$set": bson.M{"hash": bcryptHash(password)}})
+}
+
 func (u *user) FullName() string {
 	return u.FirstName+u.LastName
 }
@@ -47,4 +56,13 @@ func (p *peeve) Username() string {
 	user := user{}
 	muser.FindId(p.UserId).One(&user)
 	return user.Username
+}
+
+func bcryptHash(password string) (hash string) {
+	bytehash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptStrength)
+	if err != nil {
+		log.Print(err)
+	}
+	hash = string(bytehash)
+	return
 }
