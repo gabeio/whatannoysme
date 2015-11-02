@@ -96,8 +96,7 @@ func getUser(username string, user interface{}, done chan error) {
 }
 
 func searchUser(query string, users interface{}, done chan error) {
-	go muser.EnsureIndexKey("username")
-	done <- muser.Find(bson.M{"$text": bson.M{"$search": query}}).All(users)
+	done <- muser.Find(bson.M{"username": bson.RegEx{query,"i"}}).All(users)
 }
 
 func createPeeve(peeves interface{}, done chan error) {
@@ -113,8 +112,7 @@ func getOnePeeve(peeveId string, userId bson.ObjectId, peeve interface{}, done c
 }
 
 func searchPeeve(query string, peeves interface{}, done chan error) {
-	go mpeeve.EnsureIndexKey("body")
-	done <- mpeeve.Find(bson.M{"$text": bson.M{"$search": query}}).All(peeves)
+	done <- mpeeve.Find(bson.M{"body": bson.RegEx{query,"i"}}).All(peeves)
 }
 
 func dropPeeve(peeveId interface{}, done chan error) {
