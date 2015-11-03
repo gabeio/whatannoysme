@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	// cache all templates
+	// load & cache all templates
 	temps *template.Template = template.Must(template.ParseGlob(os.Getenv("GOPATH") +
 		"/src/github.com/gabeio/whatannoysme/templates/*.html"))
 	msess *mgo.Session // mongo connection

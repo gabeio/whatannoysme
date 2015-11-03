@@ -172,26 +172,26 @@ func Search(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Panic(err)
 	}
-	username, _ = session.Values["username"].(string)
+	username, _ = session.Values["username"].(string) // convert to string
 	r.ParseForm() // translate form
 	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
 	// TODO: actually search something instead of just redirect to <user>
 	f := r.Form
 	switch {
 	case f["q"] == nil, len(f["q"]) != 1:
+		// if query isn't defined or isn't an array of 1 element
 		err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
 			"Number": "404",
 			"Body": "Not Found",
-			"SessionUsername": username,
-			"Session": session,
+			"SessionUsername": username, // this might be blank
+			"Session": session, // this might be blank
 		})
 		if err != nil {
 			log.Panic(err)
 			return // stop
 		}
 	case f["q"] != nil, len(f["q"]) == 1:
-		users := []user{}
-		peeves := []peeve{}
+		users := []user{} // many users can be returned
 		go searchUser(f["q"][0], &users, errs)
 		switch <-errs {
 		case nil:
@@ -203,6 +203,7 @@ func Search(w http.ResponseWriter, r *http.Request) {
 			log.Panic(<-errs)
 			return // stop
 		}
+		peeves := []peeve{} // many peeves can be returned
 		go searchPeeve(f["q"][0], &peeves, errs)
 		switch <-errs {
 		case nil:

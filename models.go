@@ -24,12 +24,13 @@ type (
 	}
 
 	peeve struct {
-		Id        bson.ObjectId `bson:"_id"`
+		Id        bson.ObjectId `bson:"_id"`              // the id of this peeve
 		Root      bson.ObjectId `bson:"root"`             // original user to create the peeve
-		Parent    bson.ObjectId `bson:"parent,omitempty"` // person +1 toward the root
-		UserId    bson.ObjectId `bson:"user"`             // the user who owns this copy/peeve
-		Body      string        `bson:"body"`
-		Timestamp time.Time     `bson:"timestamp"`
+		Parent    bson.ObjectId `bson:"parent,omitempty"` // person +1 toward the origin
+		// parent must be blank if this peeve is the origin
+		UserId    bson.ObjectId `bson:"user"`             // the user who owns this version
+		Body      string        `bson:"body"`             // the peeve's text
+		Timestamp time.Time     `bson:"timestamp"`        // when this version of the peeve was made
 	}
 )
 
@@ -50,6 +51,12 @@ func (u *user) setPassword(password string) (error) {
 
 func (u *user) FullName() string {
 	return u.FirstName+u.LastName
+}
+
+func (p *peeve) User() string {
+	user := user{}
+	muser.FindId(p.UserId).One(&user)
+	return user
 }
 
 func (p *peeve) Username() string {
