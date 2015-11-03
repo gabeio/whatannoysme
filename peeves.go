@@ -18,7 +18,7 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Panic(err)
 	}
-	username, _ := session.Values["username"]
+	username, _ := session.Values["username"].(string) // convert to string
 	user := user{}
 	peeves := []peeve{}
 	go getUser(c.URLParams["username"], &user, errs)
@@ -61,10 +61,9 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	session, err := rstore.Get(r, "wam")
 	if err != nil {
 		log.Panic(err)
-		// continue
 	}
-	username, _ := session.Values["username"].(string)
-	if username != c.URLParams["username"] {
+	username, _ := session.Values["username"].(string) // convert to string
+	if username != c.URLParams["username"] { // if user logged isn't this user
 		http.Redirect(w, r, "/"+c.URLParams["username"], 302)
 		return // stop
 	}
@@ -134,10 +133,9 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	session, err := rstore.Get(r, "wam")
 	if err != nil {
 		log.Panic(err)
-		// continue
 	}
-	username, _ := session.Values["username"].(string)
-	if username != c.URLParams["username"] {
+	username, _ := session.Values["username"].(string) // convert to string
+	if username != c.URLParams["username"] { // if user logged isn't this user
 		http.Redirect(w, r, "/"+c.URLParams["username"], 302)
 		return // stop
 	}
@@ -146,6 +144,7 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	// don't do anything before we know the form is what we want
 	f := r.Form
 	switch {
+	// needs to be length 24 as mongo id's are len 24
 	case f["id"] == nil, len(f["id"]) != 1, len(f["id"][0]) != 24:
 		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
 			"Error": "Invalid Id",
@@ -158,7 +157,7 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 	default:
 		user := user{}
-		go getUser(c.URLParams["username"], &user, errs)
+		go getUser(username, &user, errs)
 		switch <-errs {
 		case nil:
 			break
@@ -178,7 +177,7 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 			log.Panic(<-errs)
 			return // stop
 		}
-		go dropPeeve(bson.ObjectIdHex(f["id"][0]), errs)
+		go dropOnePeeve(f["id"][0], user.Id, errs)
 		if <-errs != nil {
 			log.Panic(<-errs)
 			return // stop
