@@ -185,3 +185,101 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/"+c.URLParams["username"], 302)
 	}
 }
+
+func MeTooPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
+	session, err := rstore.Get(r, "wam")
+	if err != nil {
+		log.Panic(err)
+	}
+	username, _ := session.Values["username"].(string) // convert to string
+	if username == c.URLParams["username"] {
+		// don't allow a user to metoo their own peeve
+		http.Redirect(w, r, "/"+c.URLParams["username"], 302)
+		return // stop
+	}
+	r.ParseForm() // translate form
+	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
+	// don't do anything before we know the form is what we want
+	f := r.Form
+	switch {
+	// needs to be length 24 as mongo id's are len 24
+	case f["id"] == nil, len(f["id"]) != 1, len(f["id"][0]) != 24:
+		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
+			"Error": "Invalid Id",
+			"SessionUsername": username,
+			"Session": session,
+		})
+		if err != nil {
+			log.Panic(err)
+			return // stop
+		}
+	// needs to be length 24 as mongo id's are len 24
+	case f["user"] == nil, len(f["user"]) != 1, len(f["user"][0]) != 24:
+		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
+			"Error": "Invalid User",
+			"SessionUsername": username,
+			"Session": session,
+		})
+		if err != nil {
+			log.Panic(err)
+		}
+		return // stop
+	default:
+		user := user{}
+		go getUser(username, &user, errs)
+		switch <-errs {
+		case nil:
+			break
+		case mgo.ErrNotFound:
+			err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
+				"Number": "404",
+				"Body": "Not Found",
+				"SessionUsername": username,
+				"Session": session,
+			})
+			if err != nil {
+				log.Panic(err)
+				return // stop
+			}
+		default:
+			http.Error(w, http.StatusText(500), 500)
+			log.Panic(<-errs)
+			return // stop
+		}
+		metoopeeve := peeve{}
+		// don't assume input is valid
+		go getOnePeeve(f["id"][0], bson.ObjectIdHex(f["user"][0]), &metoopeeve, errs)
+		switch <-errs {
+		case nil:
+			break
+		case mgo.ErrNotFound:
+			err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
+				"Number": "404",
+				"Body": "Not Found",
+				"SessionUsername": username,
+				"Session": session,
+			})
+			if err != nil {
+				log.Panic(err)
+			}
+			return // stop
+		default:
+			http.Error(w, http.StatusText(500), 500)
+			log.Panic(<-errs)
+			return // stop
+		}
+		peevey := &peeve{
+			Id: bson.NewObjectId(), // create new id
+			Root: metoopeeve.Root, // peeve origin
+			Parent: metoopeeve.UserId, // who I got it from
+			UserId: user.Id, // who owns this peeve
+			Body: metoopeeve.Body, // original body
+			Timestamp: time.Now(), // when I reposted it
+		}
+		go createPeeve(peevey, errs)
+		if <-errs != nil {
+			log.Panic(<-errs)
+		}
+		http.Redirect(w, r, "/"+c.URLParams["username"], 302)
+	}
+}
