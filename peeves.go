@@ -99,7 +99,21 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	default:
 		user := user{}
 		go getOneUser(c.URLParams["username"], &user, errs)
-		if <-errs != nil {
+		switch <-errs {
+		case nil:
+			break
+		case gorethink.ErrEmptyResult:
+			err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
+				"Number": "404",
+				"Body": "Not Found",
+				"SessionUsername": username,
+				"Session": session,
+			})
+			if err != nil {
+				log.Panic(err)
+				return // stop
+			}
+		default:
 			http.Error(w, http.StatusText(500), 500)
 			log.Panic(<-errs)
 			return // stop
@@ -150,7 +164,21 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	default:
 		user := user{}
 		go getOneUser(username, &user, errs)
-		if <-errs != nil{
+		switch <-errs {
+		case nil:
+			break
+		case gorethink.ErrEmptyResult:
+			err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
+				"Number": "404",
+				"Body": "Not Found",
+				"SessionUsername": username,
+				"Session": session,
+			})
+			if err != nil {
+				log.Panic(err)
+				return // stop
+			}
+		default:
 			http.Error(w, http.StatusText(500), 500)
 			log.Panic(<-errs)
 			return // stop
@@ -208,6 +236,17 @@ func MeTooPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		switch <-errs {
 		case nil:
 			break
+		case gorethink.ErrEmptyResult:
+			err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
+				"Number": "404",
+				"Body": "Not Found",
+				"SessionUsername": username,
+				"Session": session,
+			})
+			if err != nil {
+				log.Panic(err)
+				return // stop
+			}
 		default:
 			http.Error(w, http.StatusText(500), 500)
 			log.Panic(<-errs)
@@ -219,6 +258,17 @@ func MeTooPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		switch <-errs {
 		case nil:
 			break
+		case gorethink.ErrEmptyResult:
+			err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
+				"Number": "404",
+				"Body": "Not Found",
+				"SessionUsername": username,
+				"Session": session,
+			})
+			if err != nil {
+				log.Panic(err)
+				return // stop
+			}
 		default:
 			http.Error(w, http.StatusText(500), 500)
 			log.Panic(<-errs)
