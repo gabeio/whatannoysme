@@ -56,6 +56,7 @@ func main() {
 	mpeeve = mdb.C("peeve")
 	mpeeve.EnsureIndexKey("body")
 	goji.Use(textHtml) // serve text/html
+	goji.Post("/too", MeTooPeeve)
 	goji.Get("/", IndexTemplate)
 	goji.Get("/login", LoginTemplate)
 	goji.Post("/login", Login)

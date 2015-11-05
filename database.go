@@ -87,34 +87,46 @@ func getRediStore() *redistore.RediStore {
 	return redisStore
 }
 
+// create
+
 func createUser(user interface{}, done chan error) {
 	done <- muser.Insert(user)
 }
 
+func createPeeve(peeve interface{}, done chan error) {
+	log.Print("cp1")
+	done <- mpeeve.Insert(peeve)
+	log.Print("cp2")
+}
+
+// get
+
 func getUser(username string, user interface{}, done chan error) {
 	done <- muser.Find(bson.M{"username": username}).One(user)
-}
-
-func searchUser(query string, users interface{}, done chan error) {
-	done <- muser.Find(bson.M{"username": bson.RegEx{query,"i"}}).All(users)
-}
-
-func createPeeve(peeves interface{}, done chan error) {
-	done <- mpeeve.Insert(peeves)
 }
 
 func getPeeves(userId bson.ObjectId, peeves interface{}, done chan error) {
 	done <- mpeeve.Find(bson.M{"user": userId}).All(peeves)
 }
 
+// get one
+
 func getOnePeeve(peeveId string, userId bson.ObjectId, peeve interface{}, done chan error) {
 	done <- mpeeve.Find(bson.M{"_id": bson.ObjectIdHex(peeveId), "user": userId}).One(peeve)
+}
+
+// search
+
+func searchUser(query string, users interface{}, done chan error) {
+	done <- muser.Find(bson.M{"username": bson.RegEx{query,"i"}}).All(users)
 }
 
 func searchPeeve(query string, peeves interface{}, done chan error) {
 	done <- mpeeve.Find(bson.M{"body": bson.RegEx{query,"i"}}).All(peeves)
 }
 
-func dropPeeve(peeveId interface{}, done chan error) {
-	done <- mpeeve.RemoveId(peeveId)
+// drop one
+
+func dropOnePeeve(peeveId string, userId bson.ObjectId, done chan error) {
+	done <- mpeeve.Remove(bson.M{"_id": bson.ObjectIdHex(peeveId), "user": userId})
 }

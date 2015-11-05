@@ -49,17 +49,17 @@ func (u *user) setPassword(password string) (error) {
 		bson.M{"$set": bson.M{"hash": bcryptHash(password)}})
 }
 
-func (u *user) FullName() string {
+func (u *user) FullName() (string) {
 	return u.FirstName+u.LastName
 }
 
-func (p *peeve) User() string {
+func (p *peeve) User() (user) {
 	user := user{}
 	muser.FindId(p.UserId).One(&user)
 	return user
 }
 
-func (p *peeve) Username() string {
+func (p *peeve) Username() (string) {
 	user := user{}
 	muser.FindId(p.UserId).One(&user)
 	return user.Username
