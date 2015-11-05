@@ -20,6 +20,8 @@ var (
 	// load & cache all templates
 	temps *template.Template = template.Must(template.ParseGlob(os.Getenv("GOPATH") +
 		"/src/github.com/gabeio/whatannoysme/templates/*.html"))
+	// session name
+	sessionName = "wam"
 	// rethink session
 	rethinkSession *r.Session
 	// redis store

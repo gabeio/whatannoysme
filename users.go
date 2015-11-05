@@ -17,7 +17,7 @@ import (
 )
 
 func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := redisStore.Get(r, "wam")
+	session, err := redisStore.Get(r, sessionName)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -121,7 +121,7 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func Login(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := redisStore.Get(r, "wam")
+	session, err := redisStore.Get(r, sessionName)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -192,7 +192,7 @@ func Login(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := redisStore.Get(r, "wam")
+	session, err := redisStore.Get(r, sessionName)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -204,7 +204,7 @@ func Logout(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func Settings(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := redisStore.Get(r, "wam")
+	session, err := redisStore.Get(r, sessionName)
 	if err != nil {
 		log.Panic(err)
 	}

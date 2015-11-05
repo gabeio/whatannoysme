@@ -13,7 +13,7 @@ import (
 )
 
 func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := redisStore.Get(r, "wam")
+	session, err := redisStore.Get(r, sessionName)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -43,7 +43,7 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := redisStore.Get(r, "wam")
+	session, err := redisStore.Get(r, sessionName)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -101,7 +101,7 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := redisStore.Get(r, "wam")
+	session, err := redisStore.Get(r, sessionName)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -146,7 +146,7 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func MeTooPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := redisStore.Get(r, "wam")
+	session, err := redisStore.Get(r, sessionName)
 	if err != nil {
 		log.Panic(err)
 	}

@@ -9,7 +9,7 @@ import (
 )
 
 func IndexTemplate(w http.ResponseWriter, r *http.Request) {
-	session, err := redisStore.Get(r, "wam")
+	session, err := redisStore.Get(r, sessionName)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -22,7 +22,7 @@ func IndexTemplate(w http.ResponseWriter, r *http.Request) {
 }
 
 func SignupTemplate(w http.ResponseWriter, r *http.Request) {
-	session, err := redisStore.Get(r, "wam")
+	session, err := redisStore.Get(r, sessionName)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -35,7 +35,7 @@ func SignupTemplate(w http.ResponseWriter, r *http.Request) {
 }
 
 func LoginTemplate(w http.ResponseWriter, r *http.Request) {
-	session, err := redisStore.Get(r, "wam")
+	session, err := redisStore.Get(r, sessionName)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -48,7 +48,7 @@ func LoginTemplate(w http.ResponseWriter, r *http.Request) {
 }
 
 func SettingsTemplate(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := redisStore.Get(r, "wam")
+	session, err := redisStore.Get(r, sessionName)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -70,7 +70,7 @@ func SettingsTemplate(c web.C, w http.ResponseWriter, r *http.Request) {
 
 func Search(w http.ResponseWriter, r *http.Request) {
 	var username string
-	session, err := redisStore.Get(r, "wam")
+	session, err := redisStore.Get(r, sessionName)
 	if err != nil {
 		log.Panic(err)
 	}
