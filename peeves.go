@@ -9,7 +9,7 @@ import (
 	"github.com/zenazn/goji/web"
 
 	// rethink
-	// "github.com/dancannon/gorethink"
+	"github.com/dancannon/gorethink"
 )
 
 func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -20,7 +20,21 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 	username, _ := session.Values["username"].(string) // convert to string
 	user := user{}
 	go getOneUser(c.URLParams["username"], &user, errs)
-	if <-errs != nil {
+	switch <-errs {
+	case nil:
+		break
+	case gorethink.ErrEmptyResult:
+		err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
+			"Number": "404",
+			"Body": "Not Found",
+			"SessionUsername": username, // this might be blank
+			"Session": session, // this might be blank
+		})
+		if err != nil {
+			log.Panic(err)
+		}
+		return
+	default:
 		log.Panic(<-errs)
 		return // stop
 	}
