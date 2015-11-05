@@ -100,8 +100,8 @@ func checkEnvs() {
 	case os.Getenv("SOCKET") == "":
 		log.Print("SOCKET variable undefined assuming 8080")
 	case os.Getenv("RETHINK") == "" &&
-		os.Getenv("RETHINKDB_PORT_28015_TCP_ADDR") == "" &&
-		os.Getenv("RETHINKDB_PORT_28015_TCP_PORT") == "":
+		os.Getenv("RETHINK_PORT_28015_TCP_ADDR") == "" &&
+		os.Getenv("RETHINK_PORT_28015_TCP_PORT") == "":
 		log.Fatal("Environmental RETHINK variable required")
 	case os.Getenv("RETHINK_DB") == "":
 		log.Print("RETHINK_DB variable undefined")

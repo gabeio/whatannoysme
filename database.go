@@ -22,10 +22,10 @@ func getRethinkSession(sessionChan chan *r.Session) {
 	case os.Getenv("RETHINK") != "":
 		rethinkurl = os.Getenv("RETHINK")
 	// docker
-	case os.Getenv("RETHINKDB_PORT_28015_TCP_ADDR") != "" &&
-		os.Getenv("RETHINKDB_PORT_28015_TCP_PORT") != "":
-		rethinkurl = os.Getenv("RETHINKDB_PORT_28015_TCP_ADDR") + ":" +
-			os.Getenv("RETHINKDB_PORT_28015_TCP_PORT")
+	case os.Getenv("RETHINK_PORT_28015_TCP_ADDR") != "" &&
+		os.Getenv("RETHINK_PORT_28015_TCP_PORT") != "":
+		rethinkurl = os.Getenv("RETHINK_PORT_28015_TCP_ADDR") + ":" +
+			os.Getenv("RETHINK_PORT_28015_TCP_PORT")
 	default:
 		log.Fatal("RETHINK Env Undefined")
 	}
