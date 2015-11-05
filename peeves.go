@@ -18,8 +18,8 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 		log.Panic(err)
 	}
 	username, _ := session.Values["username"].(string) // convert to string
-	user := user{}
-	go getOneUser(c.URLParams["username"], &user, errs)
+	thisUser := user{}
+	go getOneUser(c.URLParams["username"], &thisUser, errs)
 	switch <-errs {
 	case nil:
 		break
@@ -39,14 +39,19 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 		return // stop
 	}
 	peeves := []peeve{}
-	go getPeeves(user.Id, &peeves, errs)
-	if <-errs != nil {
+	go getPeeves(thisUser.Id, &peeves, errs)
+	switch <-errs {
+	case nil:
+		break
+	case gorethink.ErrEmptyResult:
+		break // none is okay
+	default:
 		log.Panic(<-errs)
 		return // stop
 	}
 	err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
 		"Peeves": peeves,
-		"User": user,
+		"User": thisUser,
 		"SessionUsername": username,
 		"Session": session,
 	})
