@@ -58,7 +58,7 @@
 					<!-- user is this user -->
 						<li class="list-group-item">
 							<form action="/{{ $.User.Username }}/delete" method="POST" enctype="multipart/form-data">
-								<input type="hidden" id="id" name="id" value="{{ .Id.Hex }}" />
+								<input type="hidden" id="id" name="id" value="{{ .Id }}" />
 								{{ .Body }}
 								<button type="submit" class="hides peekaboo list-btn-right btn btn-default pull-right"><span class="glyphicon glyphicon-remove"></span></button>
 							</form>
@@ -67,8 +67,8 @@
 					<!-- user is not this user -->
 						<li class="list-group-item">
 							<form action="/too" method="POST" enctype="multipart/form-data">
-								<input type="hidden" id="user" name="user" value="{{ .UserId.Hex }}" /><!-- this is the current copy owner -->
-								<input type="hidden" id="id" name="id" value="{{ .Id.Hex }}" /><!-- this is the peeve id @ owner copy -->
+								<input type="hidden" id="user" name="user" value="{{ .UserId }}" /><!-- this is the current copy owner -->
+								<input type="hidden" id="id" name="id" value="{{ .Id }}" /><!-- this is the peeve id @ owner copy -->
 								{{ .Body }}
 								<button type="submit" class="hides peekaboo list-btn-right btn btn-default pull-right">Me Too!</button>
 							</form>

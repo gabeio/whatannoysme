@@ -7,43 +7,43 @@ import (
 	"strings"
 	"net/url"
 
-	// mongo
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	// rethink
+	r "github.com/dancannon/gorethink"
 
 	// redis
-	// "github.com/garyburd/redigo/redis"
-	"gopkg.in/boj/redistore.v1"
+	redis "gopkg.in/boj/redistore.v1"
 )
 
-func getMgoSession() *mgo.Session {
-	var mgourl string
+func getRethinkSession(sessionChan chan *r.Session) {
+	var rethinkurl string
 	var err error
 	switch {
-	case os.Getenv("MONGO") != "":
-		mgourl = os.Getenv("MONGO")
-	case os.Getenv("MONGO_USER") != "" &&
-		os.Getenv("MONGO_PASS") != "" &&
-		os.Getenv("MONGO_PORT_27017_TCP_ADDR") != "" &&
-		os.Getenv("MONGO_PORT_27017_TCP_PORT") != "":
-		mgourl = "mongodb://" + os.Getenv("MONGO_USER") + ":" +
-			os.Getenv("MONGO_PASS") + "@" +
-			os.Getenv("MONGO_PORT_27017_TCP_ADDR") + ":" +
-			os.Getenv("MONGO_PORT_27017_TCP_PORT")
-	case os.Getenv("MONGO_PORT_27017_TCP_ADDR") != "" &&
-		os.Getenv("MONGO_PORT_27017_TCP_PORT") != "":
-		mgourl = "mongodb://" +
-			os.Getenv("MONGO_PORT_27017_TCP_ADDR") + ":" +
-			os.Getenv("MONGO_PORT_27017_TCP_PORT")
+	// simple
+	case os.Getenv("RETHINK") != "":
+		rethinkurl = os.Getenv("RETHINK")
+	// docker
+	case os.Getenv("RETHINK_PORT_28015_TCP_ADDR") != "" &&
+		os.Getenv("RETHINK_PORT_28015_TCP_PORT") != "":
+		rethinkurl = os.Getenv("RETHINK_PORT_28015_TCP_ADDR") + ":" +
+			os.Getenv("RETHINK_PORT_28015_TCP_PORT")
+	default:
+		log.Fatal("RETHINK Env Undefined")
 	}
-	session, err := mgo.Dial(mgourl)
+	session, err := r.Connect(r.ConnectOpts{
+		Address: rethinkurl,
+		Database: "whatannoysme",
+	    MaxIdle: 1,
+	    MaxOpen: 10,
+		// DiscoverHosts: true,
+	})
+	session.Use(os.Getenv("RETHINK_DB"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	return session
+	sessionChan<- session
 }
 
-func getRediStore() *redistore.RediStore {
+func getRediStore(redisChan chan *redis.RediStore) {
 	// var redisStore *redistore.RediStore = new(redistore.RediStore)
 	var redisHostPort string = ":6379"
 	var redisPassword string = ""
@@ -63,7 +63,7 @@ func getRediStore() *redistore.RediStore {
 			redisPassword, _ = redisURL.User.Password()
 		}
 		redisHostPort = redisURL.Host
-		if redisHostPortArray := strings.Split(redisURL.Host,":");
+		if redisHostPortArray := strings.Split(redisURL.Host, ":");
 			len(redisHostPortArray) < 2 {
 			// if the host can't be split by : then append default redis port
 			redisHostPort += ":6379"
@@ -79,54 +79,124 @@ func getRediStore() *redistore.RediStore {
 		redisHostPort = os.Getenv("REDIS_PORT_6379_TCP_ADDR") + ":" +
 			os.Getenv("REDIS_PORT_6379_TCP_PORT")
 	}
-	redisStore, err := redistore.NewRediStore(redisClients, "tcp",
-		redisHostPort, redisPassword, []byte(os.Getenv("KEY")))
+	redisStore, err := redis.NewRediStore(redisClients,
+		"tcp", redisHostPort, redisPassword, []byte(os.Getenv("KEY")))
 	if err != nil {
-		log.Panic(err)
+		log.Fatal(err)
 	}
-	return redisStore
+	redisChan<- redisStore
 }
 
 // create
 
 func createUser(user interface{}, done chan error) {
-	done <- muser.Insert(user)
+	_, err := r.Table("users").Insert(user).RunWrite(rethinkSession)
+	done<- err
 }
 
 func createPeeve(peeve interface{}, done chan error) {
-	log.Print("cp1")
-	done <- mpeeve.Insert(peeve)
-	log.Print("cp2")
+	_, err := r.Table("peeves").Insert(peeve).RunWrite(rethinkSession)
+	done<- err
 }
 
 // get
 
-func getUser(username string, user interface{}, done chan error) {
-	done <- muser.Find(bson.M{"username": username}).One(user)
+func getUsers(username string, users interface{}, done chan error) {
+	query, err := r.Table("users").Filter(map[string]interface{}{
+		"username": username,
+	}).Run(rethinkSession)
+	defer query.Close()
+	if err != nil {
+		log.Panic(err)
+	}
+	done<- query.All(users)
 }
 
-func getPeeves(userId bson.ObjectId, peeves interface{}, done chan error) {
-	done <- mpeeve.Find(bson.M{"user": userId}).All(peeves)
+func getPeeves(userId string, peeves interface{}, done chan error) {
+	query, err := r.Table("peeves").Filter(map[string]interface{}{
+		"user": userId,
+	}).OrderBy(
+		"timestamp",
+	).Run(rethinkSession)
+	defer query.Close()
+	if err != nil {
+		log.Panic(err)
+	}
+	done<- query.All(peeves)
 }
 
 // get one
 
-func getOnePeeve(peeveId string, userId bson.ObjectId, peeve interface{}, done chan error) {
-	done <- mpeeve.Find(bson.M{"_id": bson.ObjectIdHex(peeveId), "user": userId}).One(peeve)
+func getOneUser(username string, user interface{}, done chan error) {
+	query, err := r.Table("users").Filter(map[string]interface{}{
+		"username": username,
+	}).Run(rethinkSession)
+	defer query.Close()
+	if err != nil {
+		log.Panic(err)
+	}
+	done<- query.One(user)
+}
+
+func getOnePeeve(peeveId string, userId string, peeve interface{}, done chan error) {
+	query, err := r.Table("peeves").Filter(map[string]interface{}{
+		"id": peeveId,
+		"user": userId,
+	}).Run(rethinkSession)
+	defer query.Close()
+	if err != nil {
+		log.Panic(err)
+	}
+	done<- query.One(peeve)
 }
 
 // search
 
-func searchUser(query string, users interface{}, done chan error) {
-	done <- muser.Find(bson.M{"username": bson.RegEx{query,"i"}}).All(users)
+func searchUser(search string, users interface{}, done chan error) {
+	query, err := r.Table("users").Filter(func (row r.Term) r.Term {
+		return row.Field("username").Match(search)
+	}).Run(rethinkSession)
+	defer query.Close()
+	if err != nil {
+		log.Panic(err)
+	}
+	done<- query.All(users)
 }
 
-func searchPeeve(query string, peeves interface{}, done chan error) {
-	done <- mpeeve.Find(bson.M{"body": bson.RegEx{query,"i"}}).All(peeves)
+func searchPeeve(search string, peeves interface{}, done chan error) {
+	query, err := r.Table("peeves").Filter(func (row r.Term) r.Term {
+		return row.Field("body").Match(search)
+	}).Run(rethinkSession)
+	defer query.Close()
+	if err != nil {
+		log.Panic(err)
+	}
+	done<- query.All(peeves)
+}
+
+func searchPeeveField(search string, field string, peeves interface{}, done chan error) {
+	query, err := r.Table("peeves").Filter(func (row r.Term) r.Term {
+		return row.Field(field).Match(search)
+	}).Run(rethinkSession)
+	defer query.Close()
+	if err != nil {
+		log.Panic(err)
+	}
+	done<- query.All(peeves)
 }
 
 // drop one
 
-func dropOnePeeve(peeveId string, userId bson.ObjectId, done chan error) {
-	done <- mpeeve.Remove(bson.M{"_id": bson.ObjectIdHex(peeveId), "user": userId})
+func dropOneUser(userId string, done chan error) {
+	log.Fatal("dont run this")
+	_, err := r.Table("users").Get(userId).Delete().RunWrite(rethinkSession)
+	done<- err
+}
+
+func dropOnePeeve(peeveId string, userId string, done chan error) {
+	_, err := r.Table("peeves").Filter(map[string]interface{}{
+		"id": peeveId,
+		"user": userId,
+	}).Delete().RunWrite(rethinkSession)
+	done<- err
 }
