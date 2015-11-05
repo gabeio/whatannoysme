@@ -120,6 +120,89 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 	return // stop
 }
 
+func Login(c web.C, w http.ResponseWriter, r *http.Request) {
+	session, err := redisStore.Get(r, "wam")
+	if err != nil {
+		log.Panic(err)
+	}
+	username, _ := session.Values["username"].(string)
+	if username != "" {
+		http.Redirect(w, r, "/"+username, 302)
+		return // stop
+	}
+	r.ParseForm() // translate form
+	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
+	f := r.Form
+	switch {
+	case f["username"] == nil, len(f["username"]) != 1, f["username"][0] == "":
+		err = temps.ExecuteTemplate(w, "login", map[string]interface{}{
+			"Error": "Invalid Username",
+		})
+		if err != nil {
+			log.Panic(err)
+		}
+		return // stop
+	case f["password"] == nil, len(f["password"]) != 1, f["password"][0] == "":
+		err = temps.ExecuteTemplate(w, "login", map[string]interface{}{
+			"Error": "Invalid Password",
+		})
+		if err != nil {
+			log.Panic(err)
+		}
+		return // stop
+	default:
+		f["username"][0] = strings.ToLower(f["username"][0]) // assure one user per username
+		user := user{}
+		go getOneUser(f["username"][0], &user, errs)
+		switch <-errs {
+		case nil:
+			break
+		default:
+			log.Panic(<-errs)
+			return // stop
+		}
+		// user found
+		err = bcrypt.CompareHashAndPassword([]byte(user.Hash),
+			[]byte(f["password"][0]))
+		switch err {
+		case nil:
+			break
+		case bcrypt.ErrMismatchedHashAndPassword:
+			// incorrect password
+			err = temps.ExecuteTemplate(w, "login", map[string]interface{}{
+				"Error": "Invalid Username or Password",
+			})
+			if err != nil {
+				log.Panic(err)
+			}
+			return // stop
+		default:
+			log.Panic(err)
+			return // stop
+		}
+		// correct password
+		// session.Values["user"] = user
+		session.Values["username"] = user.Username
+		session.Values["hash"] = user.Hash
+		if err = session.Save(r, w); err != nil {
+			log.Panic("Error saving session: %v", err)
+		}
+		http.Redirect(w, r, "/"+f["username"][0], 302)
+	}
+}
+
+func Logout(c web.C, w http.ResponseWriter, r *http.Request) {
+	session, err := redisStore.Get(r, "wam")
+	if err != nil {
+		log.Panic(err)
+	}
+	session.Options.MaxAge = -1
+	if err = session.Save(r, w); err != nil {
+		log.Panic("Error saving session: %v", err)
+	}
+	http.Redirect(w, r, "/", 302)
+}
+
 func Settings(c web.C, w http.ResponseWriter, r *http.Request) {
 	session, err := redisStore.Get(r, "wam")
 	if err != nil {
