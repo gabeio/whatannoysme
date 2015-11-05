@@ -115,7 +115,9 @@ func getUsers(username string, users interface{}, done chan error) {
 func getPeeves(userId string, peeves interface{}, done chan error) {
 	query, err := r.Table("peeves").Filter(map[string]interface{}{
 		"user": userId,
-	}).Run(rethinkSession)
+	}).OrderBy(
+		"timestamp",
+	).Run(rethinkSession)
 	defer query.Close()
 	if err != nil {
 		log.Panic(err)
