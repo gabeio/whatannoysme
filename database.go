@@ -102,87 +102,87 @@ func createPeeve(peeve interface{}, done chan error) {
 // get
 
 func getUsers(username string, users interface{}, done chan error) {
-	query, err := r.Table("users").Filter(map[string]interface{}{
+	cursor, err := r.Table("users").Filter(map[string]interface{}{
 		"username": username,
 	}).Run(rethinkSession)
-	defer query.Close()
+	defer cursor.Close()
 	if err != nil {
 		log.Panic(err)
 	}
-	done<- query.All(users)
+	done<- cursor.All(users)
 }
 
 func getPeeves(userId string, peeves interface{}, done chan error) {
-	query, err := r.Table("peeves").Filter(map[string]interface{}{
+	cursor, err := r.Table("peeves").Filter(map[string]interface{}{
 		"user": userId,
 	}).OrderBy(
 		"timestamp",
 	).Run(rethinkSession)
-	defer query.Close()
+	defer cursor.Close()
 	if err != nil {
 		log.Panic(err)
 	}
-	done<- query.All(peeves)
+	done<- cursor.All(peeves)
 }
 
 // get one
 
 func getOneUser(username string, user interface{}, done chan error) {
-	query, err := r.Table("users").Filter(map[string]interface{}{
+	cursor, err := r.Table("users").Filter(map[string]interface{}{
 		"username": username,
 	}).Run(rethinkSession)
-	defer query.Close()
+	defer cursor.Close()
 	if err != nil {
 		log.Panic(err)
 	}
-	done<- query.One(user)
+	done<- cursor.One(user)
 }
 
 func getOnePeeve(peeveId string, userId string, peeve interface{}, done chan error) {
-	query, err := r.Table("peeves").Filter(map[string]interface{}{
+	cursor, err := r.Table("peeves").Filter(map[string]interface{}{
 		"id": peeveId,
 		"user": userId,
 	}).Run(rethinkSession)
-	defer query.Close()
+	defer cursor.Close()
 	if err != nil {
 		log.Panic(err)
 	}
-	done<- query.One(peeve)
+	done<- cursor.One(peeve)
 }
 
 // search
 
 func searchUser(search string, users interface{}, done chan error) {
-	query, err := r.Table("users").Filter(func (row r.Term) r.Term {
+	cursor, err := r.Table("users").Filter(func (row r.Term) r.Term {
 		return row.Field("username").Match(search)
 	}).Run(rethinkSession)
-	defer query.Close()
+	defer cursor.Close()
 	if err != nil {
 		log.Panic(err)
 	}
-	done<- query.All(users)
+	done<- cursor.All(users)
 }
 
 func searchPeeve(search string, peeves interface{}, done chan error) {
-	query, err := r.Table("peeves").Filter(func (row r.Term) r.Term {
+	cursor, err := r.Table("peeves").Filter(func (row r.Term) r.Term {
 		return row.Field("body").Match(search)
 	}).Run(rethinkSession)
-	defer query.Close()
+	defer cursor.Close()
 	if err != nil {
 		log.Panic(err)
 	}
-	done<- query.All(peeves)
+	done<- cursor.All(peeves)
 }
 
 func searchPeeveField(search string, field string, peeves interface{}, done chan error) {
-	query, err := r.Table("peeves").Filter(func (row r.Term) r.Term {
+	cursor, err := r.Table("peeves").Filter(func (row r.Term) r.Term {
 		return row.Field(field).Match(search)
 	}).Run(rethinkSession)
-	defer query.Close()
+	defer cursor.Close()
 	if err != nil {
 		log.Panic(err)
 	}
-	done<- query.All(peeves)
+	done<- cursor.All(peeves)
 }
 
 // drop one

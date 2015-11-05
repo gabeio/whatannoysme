@@ -78,10 +78,10 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 	// otherwise regester user
 	f["username"][0] = strings.ToLower(f["username"][0]) // force all usernames to be lowercase
-	query, err := gorethink.DB("whatannoysme").Table("users").Filter(map[string]interface{}{"username": f["username"][0]}).Count().Run(rethinkSession)
-	defer query.Close()
+	cursor, err := gorethink.DB("whatannoysme").Table("users").Filter(map[string]interface{}{"username": f["username"][0]}).Count().Run(rethinkSession)
+	defer cursor.Close()
 	var i int
-	query.One(i)
+	cursor.One(i)
 	if i > 1 {
 		err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
 			"Error": "Username taken",

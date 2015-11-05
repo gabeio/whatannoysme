@@ -64,9 +64,9 @@ func (u *user) FullName() (string) {
 
 func (p *peeve) User() (user) {
 	user := user{}
-	query, err := r.Table("users").Get(p.UserId).Run(rethinkSession)
-	defer query.Close()
-	query.One(user)
+	cursor, err := r.Table("users").Get(p.UserId).Run(rethinkSession)
+	defer cursor.Close()
+	cursor.One(user)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -75,9 +75,9 @@ func (p *peeve) User() (user) {
 
 func (p *peeve) Username() (string) {
 	user := user{}
-	query, err := r.Table("users").Get(p.UserId).Run(rethinkSession)
-	defer query.Close()
-	query.One(user)
+	cursor, err := r.Table("users").Get(p.UserId).Run(rethinkSession)
+	defer cursor.Close()
+	cursor.One(user)
 	if err != nil {
 		log.Panic(err)
 	}
