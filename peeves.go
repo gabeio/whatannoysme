@@ -115,7 +115,7 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	// don't do anything before we know the form is what we want
 	f := r.Form
 	switch {
-	// needs to be length 24 as mongo id's are len 24
+	// needs to be length 36 as rethinkdb's ids are len 36
 	case f["id"] == nil, len(f["id"]) != 1, len(f["id"][0]) != 36:
 		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
 			"Error": "Invalid Id",
@@ -161,7 +161,7 @@ func MeTooPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	// don't do anything before we know the form is what we want
 	f := r.Form
 	switch {
-	// needs to be length 24 as mongo id's are len 24
+	// needs to be length 36 as rethinkdb's ids are len 36
 	case f["id"] == nil, len(f["id"]) != 1, len(f["id"][0]) != 36:
 		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
 			"Error": "Invalid Id",
@@ -172,7 +172,7 @@ func MeTooPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 			log.Panic(err)
 			return // stop
 		}
-	// needs to be length 24 as mongo id's are len 24
+	// needs to be length 36 as rethinkdb's ids are len 36
 	case f["user"] == nil, len(f["user"]) != 1, len(f["user"][0]) != 36:
 		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
 			"Error": "Invalid User",
