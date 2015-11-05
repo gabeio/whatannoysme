@@ -11,12 +11,12 @@ import (
 	// goji
 	"github.com/zenazn/goji/web"
 
-	// mgo
-	"gopkg.in/mgo.v2"
+	// rethink
+	// "github.com/dancannon/gorethink"
 )
 
 func IndexTemplate(w http.ResponseWriter, r *http.Request) {
-	session, err := rstore.Get(r, "wam")
+	session, err := redisStore.Get(r, "wam")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -29,7 +29,7 @@ func IndexTemplate(w http.ResponseWriter, r *http.Request) {
 }
 
 func SignupTemplate(w http.ResponseWriter, r *http.Request) {
-	session, err := rstore.Get(r, "wam")
+	session, err := redisStore.Get(r, "wam")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -42,7 +42,7 @@ func SignupTemplate(w http.ResponseWriter, r *http.Request) {
 }
 
 func LoginTemplate(w http.ResponseWriter, r *http.Request) {
-	session, err := rstore.Get(r, "wam")
+	session, err := redisStore.Get(r, "wam")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -55,7 +55,7 @@ func LoginTemplate(w http.ResponseWriter, r *http.Request) {
 }
 
 func SettingsTemplate(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := rstore.Get(r, "wam")
+	session, err := redisStore.Get(r, "wam")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -76,7 +76,7 @@ func SettingsTemplate(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func Login(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := rstore.Get(r, "wam")
+	session, err := redisStore.Get(r, "wam")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -106,21 +106,12 @@ func Login(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 		return // stop
 	default:
-		f["username"][0] = strings.ToLower(f["username"][0])
+		f["username"][0] = strings.ToLower(f["username"][0]) // assure one user per username
 		user := user{}
-		go getUser(f["username"][0], &user, errs)
+		go getOneUser(f["username"][0], &user, errs)
 		switch <-errs {
 		case nil:
 			break
-		case mgo.ErrNotFound:
-			// user not found
-			err = temps.ExecuteTemplate(w, "login", map[string]interface{}{
-				"Error": "Invalid Username or Password",
-			})
-			if err != nil {
-				log.Panic(err)
-			}
-			return // stop
 		default:
 			log.Panic(<-errs)
 			return // stop
@@ -145,7 +136,8 @@ func Login(c web.C, w http.ResponseWriter, r *http.Request) {
 			return // stop
 		}
 		// correct password
-		session.Values["username"] = f["username"][0]
+		// session.Values["user"] = user
+		session.Values["username"] = user.Username
 		session.Values["hash"] = user.Hash
 		if err = session.Save(r, w); err != nil {
 			log.Panic("Error saving session: %v", err)
@@ -155,7 +147,7 @@ func Login(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func Logout(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := rstore.Get(r, "wam")
+	session, err := redisStore.Get(r, "wam")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -168,7 +160,7 @@ func Logout(c web.C, w http.ResponseWriter, r *http.Request) {
 
 func Search(w http.ResponseWriter, r *http.Request) {
 	var username string
-	session, err := rstore.Get(r, "wam")
+	session, err := redisStore.Get(r, "wam")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -196,8 +188,6 @@ func Search(w http.ResponseWriter, r *http.Request) {
 		switch <-errs {
 		case nil:
 			break // nil is good
-		case mgo.ErrNotFound:
-			break // not found is okay for searching
 		default:
 			http.Error(w, http.StatusText(500), 500)
 			log.Panic(<-errs)
@@ -208,8 +198,6 @@ func Search(w http.ResponseWriter, r *http.Request) {
 		switch <-errs {
 		case nil:
 			break // nil is good
-		case mgo.ErrNotFound:
-			break // not found is okay for searching
 		default:
 			http.Error(w, http.StatusText(500), 500)
 			log.Panic(<-errs)

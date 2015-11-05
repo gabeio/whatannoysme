@@ -7,68 +7,87 @@ import (
 	// golang.org/x/crypto
 	"golang.org/x/crypto/bcrypt"
 
-	// mgo.v2 bson
-	"gopkg.in/mgo.v2/bson"
+	// rethink
+	r "github.com/dancannon/gorethink"
 )
 
-// MONGO MODELS
+// RETHINK MODELS
 type (
+	// HINT: do not add spaces after commas for structure hints.
 	user struct {
-		Id          bson.ObjectId `bson:"_id"`
-		Username    string        `bson:"username"`
-		Hash        string        `bson:"hash"`
-		FirstName   string        `bson:"firstname"`
-		LastName    string        `bson:"lastname"`
-		Email       string        `bson:"email"`
-		Joined      time.Time     `bson:"joined"`
+		Id        string    `gorethink:"id,omitempty"` //
+		Username  string    `gorethink:"username"`     //
+		Hash      string    `gorethink:"hash"`         //
+		FirstName string    `gorethink:"firstname"`    //
+		LastName  string    `gorethink:"lastname"`     //
+		Email     string    `gorethink:"email"`        //
+		Joined    time.Time `gorethink:"joined"`       //
 	}
 
 	peeve struct {
-		Id        bson.ObjectId `bson:"_id"`              // the id of this peeve
-		Root      bson.ObjectId `bson:"root"`             // original user to create the peeve
-		Parent    bson.ObjectId `bson:"parent,omitempty"` // person +1 toward the origin
+		Id        string    `gorethink:"id,omitempty"`      // the id of this peeve
+		Root      string    `gorethink:"root"`              // original user to create the peeve
+		Parent    string    `gorethink:"parent,omitempty"` // person +1 toward the origin
 		// parent must be blank if this peeve is the origin
-		UserId    bson.ObjectId `bson:"user"`             // the user who owns this version
-		Body      string        `bson:"body"`             // the peeve's text
-		Timestamp time.Time     `bson:"timestamp"`        // when this version of the peeve was made
+		UserId    string    `gorethink:"user"`              // the user who owns this version
+		Body      string    `gorethink:"body"`              // the peeve's text
+		Timestamp time.Time `gorethink:"timestamp"`         // when this version of the peeve was made
 	}
 )
 
 // struct functions
 
 func (u *user) setFirstName(firstName string) (error) {
-	return muser.UpdateId(u.Id, bson.M{"$set": bson.M{"firstname": firstName}})
+	_, err := r.Table("users").Get(u.Id).Update(map[string]interface{}{
+		"firstname": firstName,
+	}).RunWrite(rethinkSession)
+	return err
 }
 
 func (u *user) setLastName(lastName string) (error) {
-	return muser.UpdateId(u.Id, bson.M{"$set": bson.M{"lastname": lastName}})
+	_, err := r.Table("users").Get(u.Id).Update(map[string]interface{}{
+		"lastname": lastName,
+	}).RunWrite(rethinkSession)
+	return err
 }
 
 func (u *user) setPassword(password string) (error) {
-	return muser.UpdateId(u.Id,
-		bson.M{"$set": bson.M{"hash": bcryptHash(password)}})
+	_, err := r.Table("users").Get(u.Id).Update(map[string]interface{}{
+		"hash": bcryptHash(password),
+	}).RunWrite(rethinkSession)
+	return err
 }
 
 func (u *user) FullName() (string) {
-	return u.FirstName+u.LastName
+	return u.FirstName+" "+u.LastName
 }
 
 func (p *peeve) User() (user) {
 	user := user{}
-	muser.FindId(p.UserId).One(&user)
+	query, err := r.Table("users").Get(p.UserId).Run(rethinkSession)
+	defer query.Close()
+	query.One(user)
+	if err != nil {
+		log.Panic(err)
+	}
 	return user
 }
 
 func (p *peeve) Username() (string) {
 	user := user{}
-	muser.FindId(p.UserId).One(&user)
+	query, err := r.Table("users").Get(p.UserId).Run(rethinkSession)
+	defer query.Close()
+	query.One(user)
+	if err != nil {
+		log.Panic(err)
+	}
 	return user.Username
 }
 
 func bcryptHash(password string) (hash string) {
 	bytehash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptStrength)
 	if err != nil {
-		log.Print(err)
+		log.Panic(err) // record what "broke"
 	}
 	hash = string(bytehash)
 	return

@@ -8,38 +8,23 @@ import (
 	// goji
 	"github.com/zenazn/goji/web"
 
-	// mgo
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
+	// rethink
+	// "github.com/dancannon/gorethink"
 )
 
 func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := rstore.Get(r, "wam")
+	session, err := redisStore.Get(r, "wam")
 	if err != nil {
 		log.Panic(err)
 	}
 	username, _ := session.Values["username"].(string) // convert to string
 	user := user{}
-	peeves := []peeve{}
-	go getUser(c.URLParams["username"], &user, errs)
-	switch <-errs {
-	case nil:
-		break
-	case mgo.ErrNotFound:
-		err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
-			"Number": "404",
-			"Body": "Not Found",
-			"SessionUsername": username,
-			"Session": session,
-		})
-		if err != nil {
-			log.Panic(err)
-		}
-		return // stop
-	default:
+	go getOneUser(c.URLParams["username"], &user, errs)
+	if <-errs != nil {
 		log.Panic(<-errs)
 		return // stop
 	}
+	peeves := []peeve{}
 	go getPeeves(user.Id, &peeves, errs)
 	if <-errs != nil {
 		log.Panic(<-errs)
@@ -58,7 +43,7 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := rstore.Get(r, "wam")
+	session, err := redisStore.Get(r, "wam")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -94,28 +79,14 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		return // stop
 	default:
 		user := user{}
-		go getUser(c.URLParams["username"], &user, errs)
-		switch <-errs {
-		case nil:
-			break
-		case mgo.ErrNotFound:
-			err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
-				"Number": "404",
-				"Body": "Not Found",
-				"SessionUsername": username,
-				"Session": session,
-			})
-			if err != nil {
-				log.Panic(err)
-			}
-			return // stop
-		default:
+		go getOneUser(c.URLParams["username"], &user, errs)
+		if <-errs != nil {
 			http.Error(w, http.StatusText(500), 500)
 			log.Panic(<-errs)
 			return // stop
 		}
 		go createPeeve(&peeve{
-			Id: bson.NewObjectId(),
+			// Id: bson.NewObjectId(),
 			Root: user.Id,
 			// as this is the root no parent
 			UserId: user.Id, // create a peeve == owner
@@ -130,7 +101,7 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := rstore.Get(r, "wam")
+	session, err := redisStore.Get(r, "wam")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -145,9 +116,11 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	f := r.Form
 	switch {
 	// needs to be length 24 as mongo id's are len 24
-	case f["id"] == nil, len(f["id"]) != 1, len(f["id"][0]) != 24:
+	case f["id"] == nil, len(f["id"]) != 1, len(f["id"][0]) != 36:
 		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
 			"Error": "Invalid Id",
+			// "Peeves": peeves,
+			// "User": user,
 			"SessionUsername": username,
 			"Session": session,
 		})
@@ -157,22 +130,8 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 	default:
 		user := user{}
-		go getUser(username, &user, errs)
-		switch <-errs {
-		case nil:
-			break
-		case mgo.ErrNotFound:
-			err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
-				"Number": "404",
-				"Body": "Not Found",
-				"SessionUsername": username,
-				"Session": session,
-			})
-			if err != nil {
-				log.Panic(err)
-				return // stop
-			}
-		default:
+		go getOneUser(username, &user, errs)
+		if <-errs != nil{
 			http.Error(w, http.StatusText(500), 500)
 			log.Panic(<-errs)
 			return // stop
@@ -187,7 +146,7 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func MeTooPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := rstore.Get(r, "wam")
+	session, err := redisStore.Get(r, "wam")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -203,7 +162,7 @@ func MeTooPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 	f := r.Form
 	switch {
 	// needs to be length 24 as mongo id's are len 24
-	case f["id"] == nil, len(f["id"]) != 1, len(f["id"][0]) != 24:
+	case f["id"] == nil, len(f["id"]) != 1, len(f["id"][0]) != 36:
 		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
 			"Error": "Invalid Id",
 			"SessionUsername": username,
@@ -214,7 +173,7 @@ func MeTooPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 			return // stop
 		}
 	// needs to be length 24 as mongo id's are len 24
-	case f["user"] == nil, len(f["user"]) != 1, len(f["user"][0]) != 24:
+	case f["user"] == nil, len(f["user"]) != 1, len(f["user"][0]) != 36:
 		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
 			"Error": "Invalid User",
 			"SessionUsername": username,
@@ -226,21 +185,10 @@ func MeTooPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		return // stop
 	default:
 		user := user{}
-		go getUser(username, &user, errs)
+		go getOneUser(username, &user, errs)
 		switch <-errs {
 		case nil:
 			break
-		case mgo.ErrNotFound:
-			err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
-				"Number": "404",
-				"Body": "Not Found",
-				"SessionUsername": username,
-				"Session": session,
-			})
-			if err != nil {
-				log.Panic(err)
-				return // stop
-			}
 		default:
 			http.Error(w, http.StatusText(500), 500)
 			log.Panic(<-errs)
@@ -248,28 +196,17 @@ func MeTooPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 		metoopeeve := peeve{}
 		// don't assume input is valid
-		go getOnePeeve(f["id"][0], bson.ObjectIdHex(f["user"][0]), &metoopeeve, errs)
+		go getOnePeeve(f["id"][0], f["user"][0], &metoopeeve, errs)
 		switch <-errs {
 		case nil:
 			break
-		case mgo.ErrNotFound:
-			err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
-				"Number": "404",
-				"Body": "Not Found",
-				"SessionUsername": username,
-				"Session": session,
-			})
-			if err != nil {
-				log.Panic(err)
-			}
-			return // stop
 		default:
 			http.Error(w, http.StatusText(500), 500)
 			log.Panic(<-errs)
 			return // stop
 		}
 		peevey := &peeve{
-			Id: bson.NewObjectId(), // create new id
+			// Id: bson.NewObjectId(), // create new id
 			Root: metoopeeve.Root, // peeve origin
 			Parent: metoopeeve.UserId, // who I got it from
 			UserId: user.Id, // who owns this peeve

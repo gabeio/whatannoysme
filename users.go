@@ -12,12 +12,12 @@ import (
 	// goji
 	"github.com/zenazn/goji/web"
 
-	// mgo
-	"gopkg.in/mgo.v2/bson"
+	// rethink
+	"github.com/dancannon/gorethink"
 )
 
 func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := rstore.Get(r, "wam")
+	session, err := redisStore.Get(r, "wam")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -77,8 +77,11 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 		return // stop
 	}
 	// otherwise regester user
-	f["username"][0] = strings.ToLower(f["username"][0])
-	i, err := muser.Find(bson.M{"username": f["username"][0]}).Count()
+	f["username"][0] = strings.ToLower(f["username"][0]) // force all usernames to be lowercase
+	query, err := gorethink.DB("whatannoysme").Table("users").Filter(map[string]interface{}{"username": f["username"][0]}).Count().Run(rethinkSession)
+	defer query.Close()
+	var i int
+	query.One(i)
 	if i > 1 {
 		err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
 			"Error": "Username taken",
@@ -94,19 +97,21 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 		log.Panic(err)
 		return // stop
 	}
-	go createUser(&user{
-		Id: bson.NewObjectId(),
+	newuser := &user{
+		// Id: bson.NewObjectId(),
 		Username: f["username"][0],
 		Hash: string(hash),
 		Email: f["email"][0],
 		Joined: time.Now(),
-	}, errs)
+	}
+	go createUser(newuser, errs)
 	if <-errs != nil {
 		http.Error(w, http.StatusText(500), 500)
 		log.Panic(<-errs)
 		return // stop
 	}
-	session.Values["username"] = f["username"][0]
+	// session.Values["user"] = user
+	session.Values["username"] = newuser.Username
 	session.Values["hash"] = string(hash)
 	if err = session.Save(r, w); err != nil {
 		log.Panic("Error saving session: %v", err)
@@ -116,7 +121,7 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func Settings(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := rstore.Get(r, "wam")
+	session, err := redisStore.Get(r, "wam")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -126,8 +131,8 @@ func Settings(c web.C, w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/"+c.URLParams["username"]+"/settings", 302)
 		return // stop
 	}
-	user := user{}
-	go getUser(c.URLParams["username"], &user, errs)
+	thisuser := user{}
+	go getOneUser(c.URLParams["username"], &thisuser, errs)
 	if <-errs != nil {
 		log.Panic(<-errs)
 		return // stop
@@ -137,13 +142,13 @@ func Settings(c web.C, w http.ResponseWriter, r *http.Request) {
 	f := r.Form
 	if len(f) > 0 {
 		if len(f["first"]) == 1 {
-			user.setFirstName(f["first"][0])
+			thisuser.setFirstName(f["first"][0])
 		}
 		if len(f["last"]) == 1 {
-			user.setLastName(f["last"][0])
+			thisuser.setLastName(f["last"][0])
 		}
 		if len(f["password"]) == 2 && f["password"][0] == f["password"][1] {
-			user.setPassword(f["password"][0])
+			thisuser.setPassword(f["password"][0])
 		}
 	}else{
 		http.Error(w, http.StatusText(500), 500)
