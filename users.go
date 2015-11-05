@@ -11,9 +11,6 @@ import (
 
 	// goji
 	"github.com/zenazn/goji/web"
-
-	// rethink
-	"github.com/dancannon/gorethink"
 )
 
 func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -78,10 +75,11 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 	// otherwise regester user
 	f["username"][0] = strings.ToLower(f["username"][0]) // force all usernames to be lowercase
-	cursor, err := gorethink.DB("whatannoysme").Table("users").Filter(map[string]interface{}{"username": f["username"][0]}).Count().Run(rethinkSession)
-	defer cursor.Close()
 	var i int
-	cursor.One(i)
+	go getCountUsername(f["username"][0], &i, errs)
+	if <-errs != nil {
+		log.Panic(<-errs)
+	}
 	if i > 1 {
 		err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
 			"Error": "Username taken",
