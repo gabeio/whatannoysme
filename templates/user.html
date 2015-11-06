@@ -34,9 +34,9 @@
 				<div class="col-xs-12 col-sm-12 col-md-12 col-lg-10 col-lg-offset-1">
 					<!-- <li class="list-group-item"> -->
 					<form action="/{{ .User.Username }}/create" method="POST" enctype="multipart/form-data">
-{{ if .Csrf }}
+{{ if $.Csrf }}
 	<!-- csrf -->
-						<input type="hidden" name="_csrf" value="{{ .Csrf }}" />
+						<input type="hidden" name="_csrf" value="{{ $.Csrf }}" />
 {{ end }}
 						<span class="input-group">
 							<input type="text" class="form-control" name="body" id="body" autocomplete="off" placeholder="What Annoys You?">
@@ -62,9 +62,9 @@
 					<!-- user is this user -->
 						<li class="list-group-item">
 							<form action="/{{ $.User.Username }}/delete" method="POST" enctype="multipart/form-data">
-{{ if .Csrf }}
+{{ if $.Csrf }}
 	<!-- csrf -->
-								<input type="hidden" name="_csrf" value="{{ .Csrf }}" />
+								<input type="hidden" name="_csrf" value="{{ $.Csrf }}" />
 {{ end }}
 								<input type="hidden" id="id" name="id" value="{{ .Id }}" />
 								{{ .Body }}
