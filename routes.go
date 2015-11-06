@@ -8,7 +8,7 @@ import (
 	"github.com/zenazn/goji/web"
 )
 
-func IndexTemplate(w http.ResponseWriter, r *http.Request) {
+func IndexTemplate(c web.C, w http.ResponseWriter, r *http.Request) {
 	session, err := redisStore.Get(r, sessionName)
 	if err != nil {
 		log.Panic(err)
@@ -21,7 +21,7 @@ func IndexTemplate(w http.ResponseWriter, r *http.Request) {
 	temps.ExecuteTemplate(w, "index", nil) // only serve index.html
 }
 
-func SignupTemplate(w http.ResponseWriter, r *http.Request) {
+func SignupTemplate(c web.C, w http.ResponseWriter, r *http.Request) {
 	session, err := redisStore.Get(r, sessionName)
 	if err != nil {
 		log.Panic(err)
@@ -34,7 +34,7 @@ func SignupTemplate(w http.ResponseWriter, r *http.Request) {
 	temps.ExecuteTemplate(w, "signup", nil)
 }
 
-func LoginTemplate(w http.ResponseWriter, r *http.Request) {
+func LoginTemplate(c web.C, w http.ResponseWriter, r *http.Request) {
 	session, err := redisStore.Get(r, sessionName)
 	if err != nil {
 		log.Panic(err)
@@ -68,7 +68,7 @@ func SettingsTemplate(c web.C, w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func Search(w http.ResponseWriter, r *http.Request) {
+func Search(c web.C, w http.ResponseWriter, r *http.Request) {
 	var username string
 	session, err := redisStore.Get(r, sessionName)
 	if err != nil {
