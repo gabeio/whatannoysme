@@ -10,7 +10,7 @@ import (
 	"github.com/zenazn/goji"
 
 	// rethink
-	r "github.com/dancannon/gorethink"
+	rethink "github.com/dancannon/gorethink"
 
 	// redis
 	redis "gopkg.in/boj/redistore.v1"
@@ -23,7 +23,7 @@ var (
 	// session name
 	sessionName = "wam"
 	// rethink session
-	rethinkSession *r.Session
+	rethinkSession *rethink.Session
 	// redis store
 	redisStore *redis.RediStore
 	// global bcrypt strength
@@ -46,7 +46,7 @@ func main() {
 	}
 
 	// start rethink db connect
-	rethinkChannel := make(chan *r.Session)
+	rethinkChannel := make(chan *rethink.Session)
 	go getRethinkSession(rethinkChannel)
 
 	// start redis session connect
