@@ -75,9 +75,9 @@
 					<!-- user is not this user -->
 						<li class="list-group-item">
 							<form action="/too" method="POST" enctype="multipart/form-data">
-{{ if .Csrf }}
+{{ if $.Csrf }}
 	<!-- csrf -->
-								<input type="hidden" name="_csrf" value="{{ .Csrf }}" />
+								<input type="hidden" name="_csrf" value="{{ $.Csrf }}" />
 {{ end }}
 								<input type="hidden" id="user" name="user" value="{{ .UserId }}" /><!-- this is the current copy owner -->
 								<input type="hidden" id="id" name="id" value="{{ .Id }}" /><!-- this is the peeve id @ owner copy -->
