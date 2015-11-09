@@ -8,7 +8,7 @@ import (
 	"net/url"
 
 	// rethink
-	r "github.com/dancannon/gorethink"
+	r "gopkg.in/dancannon/gorethink.v1"
 
 	// redis
 	redis "gopkg.in/boj/redistore.v1"

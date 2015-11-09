@@ -2,7 +2,7 @@ FROM golang:wheezy
 
 # if we install these first the build will be cached
 RUN go get golang.org/x/crypto/bcrypt
-RUN go get github.com/dancannon/gorethink
+RUN go get gopkg.in/dancannon/gorethink.v1
 RUN go get gopkg.in/boj/redistore.v1
 RUN go get github.com/zenazn/goji
 

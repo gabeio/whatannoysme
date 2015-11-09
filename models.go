@@ -8,7 +8,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	// rethink
-	r "github.com/dancannon/gorethink"
+	r "gopkg.in/dancannon/gorethink.v1"
 )
 
 // RETHINK MODELS

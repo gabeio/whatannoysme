@@ -10,7 +10,7 @@ import (
 	"github.com/zenazn/goji"
 
 	// rethink
-	rethink "github.com/dancannon/gorethink"
+	rethink "gopkg.in/dancannon/gorethink.v1"
 
 	// redis
 	redis "gopkg.in/boj/redistore.v1"

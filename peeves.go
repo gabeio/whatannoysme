@@ -9,7 +9,7 @@ import (
 	"github.com/zenazn/goji/web"
 
 	// rethink
-	"github.com/dancannon/gorethink"
+	"gopkg.in/dancannon/gorethink.v1"
 )
 
 func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
