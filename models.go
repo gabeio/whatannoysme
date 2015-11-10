@@ -33,6 +33,22 @@ type (
 		Body      string    `gorethink:"body"`              // the peeve's text
 		Timestamp time.Time `gorethink:"timestamp"`         // when this version of the peeve was made
 	}
+
+	peeveAndUser struct {
+		Id        string    `gorethink:"id,omitempty"`
+		Username  string    `gorethink:"username,omitempty"`
+		Hash      string    `gorethink:"hash,omitempty"`
+		FirstName string    `gorethink:"firstname,omitempty"`
+		LastName  string    `gorethink:"lastname,omitempty"`
+		Email     string    `gorethink:"email,omitempty"`
+		Joined    time.Time `gorethink:"joined,omitempty"`
+		Root      string    `gorethink:"root,omitempty"`              // original user to create the peeve
+		Parent    string    `gorethink:"parent,omitempty"` // person +1 toward the origin
+		// parent must be blank if this peeve is the origin
+		UserId    string    `gorethink:"user,omitempty"`              // the user who owns this version
+		Body      string    `gorethink:"body,omitempty"`              // the peeve's text
+		Timestamp time.Time `gorethink:"timestamp,omitempty"`         // when this version of the peeve was made
+	}
 )
 
 // struct functions
@@ -62,27 +78,27 @@ func (u *user) FullName() (string) {
 	return u.FirstName+" "+u.LastName
 }
 
-func (p *peeve) User() (user) {
-	user := user{}
-	cursor, err := r.Table("users").Get(p.UserId).Run(rethinkSession)
-	defer cursor.Close()
-	cursor.One(user)
-	if err != nil {
-		log.Panic(err)
-	}
-	return user
-}
-
-func (p *peeve) Username() (string) {
-	user := user{}
-	cursor, err := r.Table("users").Get(p.UserId).Run(rethinkSession)
-	defer cursor.Close()
-	cursor.One(user)
-	if err != nil {
-		log.Panic(err)
-	}
-	return user.Username
-}
+// func (p *peeve) User() (user) {
+// 	user := user{}
+// 	cursor, err := r.Table("users").Get(p.UserId).Run(rethinkSession)
+// 	defer cursor.Close()
+// 	cursor.One(user)
+// 	if err != nil {
+// 		log.Panic(err)
+// 	}
+// 	return user
+// }
+//
+// func (p *peeve) Username() (string) {
+// 	user := user{}
+// 	cursor, err := r.Table("users").Get(p.UserId).Run(rethinkSession)
+// 	defer cursor.Close()
+// 	cursor.One(user)
+// 	if err != nil {
+// 		log.Panic(err)
+// 	}
+// 	return user.Username
+// }
 
 func bcryptHash(password string) (hash string) {
 	bytehash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptStrength)
