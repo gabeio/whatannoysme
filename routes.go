@@ -103,7 +103,7 @@ func Search(c web.C, w http.ResponseWriter, r *http.Request) {
 			log.Panic(<-errs)
 			return // stop
 		}
-		peeves := []peeve{} // many peeves can be returned
+		peeves := []peeveAndUser{} // many peeves can be returned
 		go searchPeeve(f["q"][0], &peeves, errs)
 		switch <-errs {
 		case nil:
