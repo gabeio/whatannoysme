@@ -179,6 +179,8 @@ func searchUser(search string, users interface{}, done chan error) {
 func searchPeeve(search string, peeves interface{}, done chan error) {
 	cursor, err := r.Table("peeves").Filter(func (row r.Term) r.Term {
 		return row.Field("body").Match(search)
+	}).Filter(func (row r.Term) r.Term {
+		return row.Field("user").Eq(row.Field("root"))
 	}).InnerJoin(r.Table("users"), func (peeveRow r.Term, userRow r.Term) r.Term {
 		return peeveRow.Field("user").Eq(userRow.Field("id"))
 	}).Zip().Run(rethinkSession)
