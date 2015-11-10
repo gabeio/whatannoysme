@@ -74,7 +74,9 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 		return // stop
 	}
 	// otherwise regester user
-	f["username"][0] = strings.ToLower(f["username"][0]) // force all usernames to be lowercase
+	// force all usernames to be lowercase
+	// remove all spaces in username
+	f["username"][0] = strings.Replace(strings.ToLower(f["username"][0]), " ", "_", -1)
 	var i int
 	go getCountUsername(f["username"][0], &i, errs)
 	if <-errs != nil {
