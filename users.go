@@ -74,9 +74,18 @@ func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
 		return // stop
 	}
 	// otherwise regester user
+	if len(strings.Fields(f["username"][0])) > 1 {
+		// username has \t \n or space
+		err = temps.ExecuteTemplate(w, "signup", map[string]interface{}{
+			"Error": "Username Contains Invalid Characters",
+		})
+		if err != nil {
+			log.Panic(err)
+		}
+		return // stop
+	}
 	// force all usernames to be lowercase
-	// remove all spaces in username
-	f["username"][0] = strings.Replace(strings.ToLower(f["username"][0]), " ", "_", -1)
+	f["username"][0] = strings.ToLower(f["username"][0])
 	var i int
 	go getCountUsername(f["username"][0], &i, errs)
 	if <-errs != nil {
