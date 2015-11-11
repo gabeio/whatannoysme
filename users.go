@@ -11,6 +11,9 @@ import (
 
 	// goji
 	"github.com/zenazn/goji/web"
+
+	// rethink
+	"gopkg.in/dancannon/gorethink.v1"
 )
 
 func CreateUser(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -166,6 +169,14 @@ func Login(c web.C, w http.ResponseWriter, r *http.Request) {
 		switch <-errs {
 		case nil:
 			break
+		case gorethink.ErrEmptyResult:
+			err = temps.ExecuteTemplate(w, "login", map[string]interface{}{
+				"Error": "Invalid Username or Password",
+			})
+			if err != nil {
+				log.Panic(err)
+			}
+			return // stop
 		default:
 			log.Panic(<-errs)
 			return // stop
