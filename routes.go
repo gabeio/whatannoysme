@@ -4,51 +4,59 @@ import (
 	"log"
 	"net/http"
 
-	// goji
-	"github.com/zenazn/goji/web"
+	// echo
+	"github.com/labstack/echo"
 )
 
-func IndexTemplate(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := redisStore.Get(r, sessionName)
+func IndexTemplate(c *echo.Context) error {
+	r := c.Request()
+	w := c.Response()
+	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
 		log.Panic(err)
 	}
 	username, _ := session.Values["username"].(string)
 	if username != "" {
 		http.Redirect(w, r, "/"+username, 302) // redirect to their page
-		return // stop
+		return nil // stop
 	}
-	temps.ExecuteTemplate(w, "index", nil) // only serve index.html
+	return c.Render(http.StatusOK, "index", nil) // only serve index.html
 }
 
-func SignupTemplate(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := redisStore.Get(r, sessionName)
+func SignupTemplate(c *echo.Context) error {
+	r := c.Request()
+	w := c.Response()
+	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
 		log.Panic(err)
 	}
 	username, _ := session.Values["username"].(string)
 	if username != "" {
 		http.Redirect(w, r, "/"+username, 302)
-		return // stop
+		return nil // stop
 	}
-	temps.ExecuteTemplate(w, "signup", nil)
+	return c.Render(http.StatusOK, "signup", nil)
 }
 
-func LoginTemplate(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := redisStore.Get(r, sessionName)
+func LoginTemplate(c *echo.Context) error {
+	r := c.Request()
+	w := c.Response()
+	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
 		log.Panic(err)
 	}
 	username, _ := session.Values["username"].(string)
 	if username != "" {
 		http.Redirect(w, r, "/"+username, 302)
-		return // stop
+		return nil // stop
 	}
-	temps.ExecuteTemplate(w, "login", nil)
+	return c.Render(http.StatusOK, "login", nil)
 }
 
-func SettingsTemplate(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := redisStore.Get(r, sessionName)
+func SettingsTemplate(c *echo.Context) error {
+	r := c.Request()
+	w := c.Response()
+	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -56,21 +64,23 @@ func SettingsTemplate(c web.C, w http.ResponseWriter, r *http.Request) {
 	if username == "" {
 		// user is not logged in
 		http.Redirect(w, r, "/", 302)
-		return // stop
+		return nil // stop
 	}
-	if username != c.URLParams["username"] {
+	if username != c.Param("username") {
 		// user is not this user
 		http.Redirect(w, r, "/"+username+"/settings", 302)
-		return // stop
+		return nil // stop
 	}
-	temps.ExecuteTemplate(w, "settings", map[string]interface{}{
+	return c.Render(http.StatusOK, "settings", map[string]interface{}{
 		"SessionUsername": username,
 	})
 }
 
-func Search(c web.C, w http.ResponseWriter, r *http.Request) {
+func Search(c *echo.Context) error {
+	r := c.Request()
+	w := c.Response()
 	var username string
-	session, err := redisStore.Get(r, sessionName)
+	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -82,7 +92,7 @@ func Search(c web.C, w http.ResponseWriter, r *http.Request) {
 	switch {
 	case f["q"] == nil, len(f["q"]) != 1:
 		// if query isn't defined or isn't an array of 1 element
-		err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
+		return c.Render(http.StatusNotFound, "error", map[string]interface{}{
 			"Number": "404",
 			"Body": "Not Found",
 			"SessionUsername": username, // this might be blank
@@ -90,7 +100,7 @@ func Search(c web.C, w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil {
 			log.Panic(err)
-			return // stop
+			return nil // stop
 		}
 	case f["q"] != nil, len(f["q"]) == 1:
 		users := []user{} // many users can be returned
@@ -101,7 +111,7 @@ func Search(c web.C, w http.ResponseWriter, r *http.Request) {
 		default:
 			http.Error(w, http.StatusText(500), 500)
 			log.Panic(<-errs)
-			return // stop
+			return nil // stop
 		}
 		peeves := []peeveAndUser{} // many peeves can be returned
 		go searchPeeve(f["q"][0], &peeves, errs)
@@ -111,9 +121,9 @@ func Search(c web.C, w http.ResponseWriter, r *http.Request) {
 		default:
 			http.Error(w, http.StatusText(500), 500)
 			log.Panic(<-errs)
-			return // stop
+			return nil // stop
 		}
-		err = temps.ExecuteTemplate(w, "search", map[string]interface{}{
+		return c.Render(http.StatusOK, "search", map[string]interface{}{
 			"Users": users,
 			"Peeves": peeves,
 			"SessionUsername": username,
@@ -121,10 +131,11 @@ func Search(c web.C, w http.ResponseWriter, r *http.Request) {
 		})
 		if err != nil {
 			log.Panic(err)
-			return // stop
+			return nil // stop
 		}
-		return
+		return nil // stop
 	default:
 		http.Redirect(w, r, "/"+f["q"][0], 302)
 	}
+	return nil // stop
 }
