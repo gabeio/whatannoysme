@@ -15,8 +15,6 @@ import (
 func GetPeeves(c *echo.Context) error {
 	r := c.Request()
 	// w := c.Response()
-	log.Print(c.Request())
-	log.Print(c.Response())
 	session, err := redisStore.Get(r, sessionName)
 	if err != nil {
 		log.Panic(err)
