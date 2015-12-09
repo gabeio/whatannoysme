@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"time"
 	"strings"
 	"net/http"
@@ -17,20 +16,17 @@ import (
 )
 
 func CreateUser(c *echo.Context) error {
-	r := c.Request()
-	w := c.Response()
 	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		log.Panic(err)
+		c.Echo().Logger().Trace(err)
 	}
 	username, _ := session.Values["username"].(string)
 	if username != "" {
-		http.Redirect(w, r, "/"+username, 302)
-		return nil // stop
+		return c.Redirect(302, "/"+username)
 	}
-	r.ParseForm() // translate form
-	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
-	f := r.Form
+	c.Request().ParseForm() // translate form
+	c.Request().ParseMultipartForm(1000000) // translate multipart 1Mb limit
+	f := c.Request().Form
 	switch {
 	// if username isn't present or there aren't username field(s) or blank
 	case f["username"] == nil, len(f["username"]) != 1, f["username"][0] == "":
@@ -38,7 +34,7 @@ func CreateUser(c *echo.Context) error {
 			"Error": "Bad Username",
 		})
 		if err != nil {
-			log.Panic(err)
+			c.Echo().Logger().Trace(err)
 		}
 		return nil // stop
 	// if password isn't present or there aren't 2 password field(s) or blank
@@ -47,7 +43,7 @@ func CreateUser(c *echo.Context) error {
 			"Error": "Bad Password",
 		})
 		if err != nil {
-			log.Panic(err)
+			c.Echo().Logger().Trace(err)
 		}
 		return nil // stop
 	// if email isn't present or there aren't 1 email field(s) or email is blank
@@ -56,7 +52,7 @@ func CreateUser(c *echo.Context) error {
 			"Error": "Bad Email",
 		})
 		if err != nil {
-			log.Panic(err)
+			c.Echo().Logger().Trace(err)
 		}
 		return nil // stop
 	// max username length 13
@@ -65,7 +61,7 @@ func CreateUser(c *echo.Context) error {
 			"Error": "Username too long",
 		})
 		if err != nil {
-			log.Panic(err)
+			c.Echo().Logger().Trace(err)
 		}
 		return nil // stop
 	// if the two passwords don't match
@@ -74,7 +70,7 @@ func CreateUser(c *echo.Context) error {
 			"Error": "Passwords do not match",
 		})
 		if err != nil {
-			log.Panic(err)
+			c.Echo().Logger().Trace(err)
 		}
 		return nil // stop
 	}
@@ -85,7 +81,7 @@ func CreateUser(c *echo.Context) error {
 			"Error": "Username Contains Invalid Characters",
 		})
 		if err != nil {
-			log.Panic(err)
+			c.Echo().Logger().Trace(err)
 		}
 		return nil // stop
 	}
@@ -94,21 +90,21 @@ func CreateUser(c *echo.Context) error {
 	var i int
 	go getCountUsername(f["username"][0], &i, errs)
 	if <-errs != nil {
-		log.Panic(<-errs)
+		c.Echo().Logger().Trace(<-errs)
 	}
 	if i > 1 {
 		return c.Render(http.StatusOK, "signup", map[string]interface{}{
 			"Error": "Username taken",
 		})
 		if err != nil {
-			log.Panic(err)
+			c.Echo().Logger().Trace(err)
 		}
 		return nil // stop
 	}
 	hash, err := bcrypt.GenerateFromPassword(
 		[]byte(f["password"][0]), bcryptStrength)
 	if err != nil {
-		log.Panic(err)
+		c.Echo().Logger().Trace(err)
 		return nil // stop
 	}
 	newuser := &user{
@@ -120,42 +116,38 @@ func CreateUser(c *echo.Context) error {
 	}
 	go createUser(newuser, errs)
 	if <-errs != nil {
-		http.Error(w, http.StatusText(500), 500)
-		log.Panic(<-errs)
+		http.Error(c.Response(), http.StatusText(500), 500)
+		c.Echo().Logger().Trace(<-errs)
 		return nil // stop
 	}
 	// session.Values["user"] = user
 	session.Values["username"] = newuser.Username
 	session.Values["hash"] = string(hash)
-	if err = session.Save(c.Request(), w); err != nil {
-		log.Panic("Error saving session: %v", err)
+	if err = session.Save(c.Request(), c.Response()); err != nil {
+		c.Echo().Logger().Trace("Error saving session: %v", err)
 	}
-	http.Redirect(w, r, "/"+f["username"][0], 302)
-	return nil // stop
+	return c.Redirect(302, "/"+f["username"][0])
 }
 
 func Login(c *echo.Context) error {
-	r := c.Request()
-	w := c.Response()
 	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		log.Panic(err)
+		c.Echo().Logger().Trace(err)
 	}
 	username, _ := session.Values["username"].(string)
 	if username != "" {
-		http.Redirect(w, r, "/"+username, 302)
-		return nil // stop
+		return c.Redirect(302, "/"+username)
 	}
-	r.ParseForm() // translate form
-	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
-	f := r.Form
+	c.Request().ParseForm() // translate form
+	c.Request().ParseMultipartForm(1000000) // translate multipart 1Mb limit
+	f := c.Request().Form
 	switch {
 	case f["username"] == nil, len(f["username"]) != 1, f["username"][0] == "":
 		return c.Render(http.StatusOK, "login", map[string]interface{}{
 			"Error": "Invalid Username",
 		})
 		if err != nil {
-			log.Panic(err)
+			c.Echo().Logger().Trace(err)
 		}
 		return nil // stop
 	case f["password"] == nil, len(f["password"]) != 1, f["password"][0] == "":
@@ -163,7 +155,7 @@ func Login(c *echo.Context) error {
 			"Error": "Invalid Password",
 		})
 		if err != nil {
-			log.Panic(err)
+			c.Echo().Logger().Trace(err)
 		}
 		return nil // stop
 	default:
@@ -178,11 +170,11 @@ func Login(c *echo.Context) error {
 				"Error": "Invalid Username or Password",
 			})
 			if err != nil {
-				log.Panic(err)
+				c.Echo().Logger().Trace(err)
 			}
 			return nil // stop
 		default:
-			log.Panic(<-errs)
+			c.Echo().Logger().Trace(<-errs)
 			return nil // stop
 		}
 		// user found
@@ -197,63 +189,56 @@ func Login(c *echo.Context) error {
 				"Error": "Invalid Username or Password",
 			})
 			if err != nil {
-				log.Panic(err)
+				c.Echo().Logger().Trace(err)
 			}
 			return nil // stop
 		default:
-			log.Panic(err)
+			c.Echo().Logger().Trace(err)
 			return nil // stop
 		}
 		// correct password
 		// session.Values["user"] = user
 		session.Values["username"] = user.Username
 		session.Values["hash"] = user.Hash
-		if err = session.Save(c.Request(), w); err != nil {
-			log.Panic("Error saving session: %v", err)
+		if err = session.Save(c.Request(), c.Response()); err != nil {
+			c.Echo().Logger().Trace("Error saving session: %v", err)
 		}
-		http.Redirect(w, r, "/"+f["username"][0], 302)
-		return nil // stop
+		return c.Redirect(302, "/"+f["username"][0])
 	}
 	return nil // stop
 }
 
 func Logout(c *echo.Context) error {
-	r := c.Request()
-	w := c.Response()
 	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		log.Panic(err)
+		c.Echo().Logger().Trace(err)
 	}
 	session.Options.MaxAge = -1
-	if err = session.Save(c.Request(), w); err != nil {
-		log.Panic("Error saving session: %v", err)
+	if err = session.Save(c.Request(), c.Response()); err != nil {
+		c.Echo().Logger().Trace("Error saving session: %v", err)
 	}
-	http.Redirect(w, r, "/", 302)
-	return nil // stop
+	return c.Redirect(302, "/")
 }
 
 func Settings(c *echo.Context) error {
-	r := c.Request()
-	w := c.Response()
 	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		log.Panic(err)
+		c.Echo().Logger().Trace(err)
 	}
 	username, _ := session.Values["username"].(string)
 	if username != c.Param("username") {
 		// user is not this user
-		http.Redirect(w, r, "/"+c.Param("username")+"/settings", 302)
-		return nil // stop
+		return c.Redirect(302, "/"+c.Param("username")+"/settings")
 	}
 	thisuser := user{}
 	go getOneUser(c.Param("username"), &thisuser, errs)
 	if <-errs != nil {
-		log.Panic(<-errs)
+		c.Echo().Logger().Trace(<-errs)
 		return nil // stop
 	}
-	r.ParseForm() // translate form
-	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
-	f := r.Form
+	c.Request().ParseForm() // translate form
+	c.Request().ParseMultipartForm(1000000) // translate multipart 1Mb limit
+	f := c.Request().Form
 	if len(f) > 0 {
 		if len(f["first"]) == 1 {
 			thisuser.setFirstName(f["first"][0])
@@ -265,9 +250,8 @@ func Settings(c *echo.Context) error {
 			thisuser.setPassword(f["password"][0])
 		}
 	}else{
-		http.Error(w, http.StatusText(500), 500)
+		http.Error(c.Response(), http.StatusText(500), 500)
 		return nil // stop
 	}
-	http.Redirect(w, r, "/"+c.Param("username")+"/settings", 302)
-	return nil // stop
+	return c.Redirect(302, "/"+c.Param("username")+"/settings")
 }
