@@ -26,6 +26,7 @@ func getRethinkSession(sessionChan chan *r.Session) {
 		os.Getenv("RETHINK_PORT_28015_TCP_PORT") != "":
 		rethinkurl = os.Getenv("RETHINK_PORT_28015_TCP_ADDR") + ":" +
 			os.Getenv("RETHINK_PORT_28015_TCP_PORT")
+	// default fail
 	default:
 		log.Fatal("RETHINK Env Undefined")
 	}
@@ -54,6 +55,7 @@ func getRediStore(redisChan chan *redis.RediStore) {
 		redisClients = 2
 	}
 	switch {
+	// simple
 	case os.Getenv("REDIS") != "":
 		redisURL, err := url.Parse(os.Getenv("REDIS"))
 		if err != nil {
@@ -68,16 +70,21 @@ func getRediStore(redisChan chan *redis.RediStore) {
 			// if the host can't be split by : then append default redis port
 			redisHostPort += ":6379"
 		}
+	// docker with auth
 	case os.Getenv("REDIS_PASS") != "" &&
 		os.Getenv("REDIS_PORT_6379_TCP_ADDR") != "" &&
 		os.Getenv("REDIS_PORT_6379_TCP_PORT") != "":
 		redisHostPort = os.Getenv("REDIS_PORT_6379_TCP_ADDR") + ":" +
 			os.Getenv("REDIS_PORT_6379_TCP_PORT")
 		redisPassword = os.Getenv("REDIS_PASS")
+	// docker without auth
 	case os.Getenv("REDIS_PORT_6379_TCP_ADDR") != "" &&
 		os.Getenv("REDIS_PORT_6379_TCP_PORT") != "":
 		redisHostPort = os.Getenv("REDIS_PORT_6379_TCP_ADDR") + ":" +
 			os.Getenv("REDIS_PORT_6379_TCP_PORT")
+	// default fail
+	default:
+		log.Fatal("REDIS Env Undefined")
 	}
 	redisStore, err := redis.NewRediStore(redisClients,
 		"tcp", redisHostPort, redisPassword, []byte(os.Getenv("KEY")))
