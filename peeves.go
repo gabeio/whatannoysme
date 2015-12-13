@@ -1,42 +1,37 @@
 package main
 
 import (
-	"log"
 	"time"
 	"net/http"
 
-	// goji
-	"github.com/zenazn/goji/web"
+	// echo
+	"github.com/labstack/echo"
 
 	// rethink
 	"gopkg.in/dancannon/gorethink.v1"
 )
 
-func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := redisStore.Get(r, sessionName)
+func GetPeeves(c *echo.Context) error {
+	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		log.Panic(err)
+		c.Echo().Logger().Trace(err)
 	}
 	username, _ := session.Values["username"].(string) // convert to string
 	thisUser := user{}
-	go getOneUser(c.URLParams["username"], &thisUser, errs)
+	go getOneUser(c.Param("username"), &thisUser, errs)
 	switch <-errs {
 	case nil:
 		break
 	case gorethink.ErrEmptyResult:
-		err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
+		return c.Render(http.StatusNotFound, "error", map[string]interface{}{
 			"Number": "404",
 			"Body": "Not Found",
 			"SessionUsername": username, // this might be blank
 			"Session": session, // this might be blank
 		})
-		if err != nil {
-			log.Panic(err)
-		}
-		return
 	default:
-		log.Panic(<-errs)
-		return // stop
+		c.Echo().Logger().Trace(<-errs)
+		return nil // stop
 	}
 	peeves := []peeve{}
 	go getPeeves(thisUser.Id, &peeves, errs)
@@ -46,77 +41,60 @@ func GetPeeves(c web.C, w http.ResponseWriter, r *http.Request) {
 	case gorethink.ErrEmptyResult:
 		break // none is okay
 	default:
-		log.Panic(<-errs)
-		return // stop
+		c.Echo().Logger().Trace(<-errs)
+		return nil // stop
 	}
-	err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
+	return c.Render(http.StatusOK, "user", map[string]interface{}{
 		"Peeves": peeves,
 		"User": thisUser,
 		"SessionUsername": username,
 		"Session": session,
 	})
-	if err != nil {
-		log.Panic(err)
-		return // stop
-	}
 }
 
-func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := redisStore.Get(r, sessionName)
+func CreatePeeve(c *echo.Context) error {
+	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		log.Panic(err)
+		c.Echo().Logger().Trace(err)
 	}
 	username, _ := session.Values["username"].(string) // convert to string
-	if username != c.URLParams["username"] { // if user logged isn't this user
-		http.Redirect(w, r, "/"+c.URLParams["username"], 302)
-		return // stop
+	if username != c.Param("username") { // if user logged isn't this user
+		return c.Redirect(302, "/"+c.Param("username"))
 	}
-	r.ParseForm() // translate form
-	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
+	c.Request().ParseForm() // translate form
+	c.Request().ParseMultipartForm(1000000) // translate multipart 1Mb limit
 	// don't do anything before we know the form is what we want
-	f := r.Form
+	f := c.Request().Form
 	switch {
 	case f["body"] == nil, len(f["body"]) != 1, f["body"][0] == "":
-		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
+		return c.Render(http.StatusOK, "user", map[string]interface{}{
 			"Error": "Invalid Body",
 			"SessionUsername": username,
 			"Session": session,
 		})
-		if err != nil {
-			log.Panic(err)
-		}
-		return // stop
 	case len(f["body"][0]) > 140:
-		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
+		return c.Render(http.StatusOK, "user", map[string]interface{}{
 			"Error": "Peeve Too Long",
 			"SessionUsername": username,
 			"Session": session,
 		})
-		if err != nil {
-			log.Panic(err)
-		}
-		return // stop
 	default:
 		user := user{}
-		go getOneUser(c.URLParams["username"], &user, errs)
+		go getOneUser(c.Param("username"), &user, errs)
 		switch <-errs {
 		case nil:
 			break
 		case gorethink.ErrEmptyResult:
-			err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
+			return c.Render(http.StatusNotFound, "error", map[string]interface{}{
 				"Number": "404",
 				"Body": "Not Found",
 				"SessionUsername": username,
 				"Session": session,
 			})
-			if err != nil {
-				log.Panic(err)
-				return // stop
-			}
 		default:
-			http.Error(w, http.StatusText(500), 500)
-			log.Panic(<-errs)
-			return // stop
+			http.Error(c.Response(), http.StatusText(500), 500)
+			c.Echo().Logger().Trace(<-errs)
+			return nil // stop
 		}
 		go createPeeve(&peeve{
 			// Id: bson.NewObjectId(),
@@ -127,40 +105,36 @@ func CreatePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 			Timestamp: time.Now(),
 		}, errs)
 		if <-errs != nil {
-			log.Panic(<-errs)
+			c.Echo().Logger().Trace(<-errs)
 		}
-		http.Redirect(w, r, "/"+c.URLParams["username"], 302)
+		return c.Redirect(302, "/"+c.Param("username"))
 	}
+	return nil
 }
 
-func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := redisStore.Get(r, sessionName)
+func DeletePeeve(c *echo.Context) error {
+	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		log.Panic(err)
+		c.Echo().Logger().Trace(err)
 	}
 	username, _ := session.Values["username"].(string) // convert to string
-	if username != c.URLParams["username"] { // if user logged isn't this user
-		http.Redirect(w, r, "/"+c.URLParams["username"], 302)
-		return // stop
+	if username != c.Param("username") { // if user logged isn't this user
+		return c.Redirect(302, "/"+c.Param("username"))
 	}
-	r.ParseForm() // translate form
-	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
+	c.Request().ParseForm() // translate form
+	c.Request().ParseMultipartForm(1000000) // translate multipart 1Mb limit
 	// don't do anything before we know the form is what we want
-	f := r.Form
+	f := c.Request().Form
 	switch {
 	// needs to be length 36 as rethinkdb's ids are len 36
 	case f["id"] == nil, len(f["id"]) != 1, len(f["id"][0]) != 36:
-		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
+		return c.Render(http.StatusOK, "user", map[string]interface{}{
 			"Error": "Invalid Id",
 			// "Peeves": peeves,
 			// "User": user,
 			"SessionUsername": username,
 			"Session": session,
 		})
-		if err != nil {
-			log.Panic(err)
-			return // stop
-		}
 	default:
 		user := user{}
 		go getOneUser(username, &user, errs)
@@ -168,68 +142,56 @@ func DeletePeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		case nil:
 			break
 		case gorethink.ErrEmptyResult:
-			err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
+			return c.Render(http.StatusNotFound, "error", map[string]interface{}{
 				"Number": "404",
 				"Body": "Not Found",
 				"SessionUsername": username,
 				"Session": session,
 			})
-			if err != nil {
-				log.Panic(err)
-				return // stop
-			}
 		default:
-			http.Error(w, http.StatusText(500), 500)
-			log.Panic(<-errs)
-			return // stop
+			http.Error(c.Response(), http.StatusText(500), 500)
+			c.Echo().Logger().Trace(<-errs)
+			return nil // stop
 		}
 		go dropOnePeeve(f["id"][0], user.Id, errs)
 		if <-errs != nil {
-			log.Panic(<-errs)
-			return // stop
+			c.Echo().Logger().Trace(<-errs)
+			return nil // stop
 		}
-		http.Redirect(w, r, "/"+c.URLParams["username"], 302)
+		return c.Redirect(302, "/"+c.Param("username"))
 	}
+	return nil
 }
 
-func MeTooPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
-	session, err := redisStore.Get(r, sessionName)
+func MeTooPeeve(c *echo.Context) error {
+	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		log.Panic(err)
+		c.Echo().Logger().Trace(err)
 	}
 	username, _ := session.Values["username"].(string) // convert to string
-	if username == c.URLParams["username"] {
+	if username == c.Param("username") {
 		// don't allow a user to metoo their own peeve
-		http.Redirect(w, r, "/"+c.URLParams["username"], 302)
-		return // stop
+		return c.Redirect(302, "/"+c.Param("username"))
 	}
-	r.ParseForm() // translate form
-	r.ParseMultipartForm(1000000) // translate multipart 1Mb limit
+	c.Request().ParseForm() // translate form
+	c.Request().ParseMultipartForm(1000000) // translate multipart 1Mb limit
 	// don't do anything before we know the form is what we want
-	f := r.Form
+	f := c.Request().Form
 	switch {
 	// needs to be length 36 as rethinkdb's ids are len 36
 	case f["id"] == nil, len(f["id"]) != 1, len(f["id"][0]) != 36:
-		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
+		return c.Render(http.StatusOK, "user", map[string]interface{}{
 			"Error": "Invalid Id",
 			"SessionUsername": username,
 			"Session": session,
 		})
-		if err != nil {
-			log.Panic(err)
-			return // stop
-		}
 	// needs to be length 36 as rethinkdb's ids are len 36
 	case f["user"] == nil, len(f["user"]) != 1, len(f["user"][0]) != 36:
-		err = temps.ExecuteTemplate(w, "user", map[string]interface{}{
+		return c.Render(http.StatusOK, "user", map[string]interface{}{
 			"Error": "Invalid User",
 			"SessionUsername": username,
 			"Session": session,
 		})
-		if err != nil {
-			log.Panic(err)
-		}
-		return // stop
 	default:
 		user := user{}
 		go getOneUser(username, &user, errs)
@@ -237,20 +199,16 @@ func MeTooPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		case nil:
 			break
 		case gorethink.ErrEmptyResult:
-			err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
+			return c.Render(http.StatusNotFound, "error", map[string]interface{}{
 				"Number": "404",
 				"Body": "Not Found",
 				"SessionUsername": username,
 				"Session": session,
 			})
-			if err != nil {
-				log.Panic(err)
-				return // stop
-			}
 		default:
-			http.Error(w, http.StatusText(500), 500)
-			log.Panic(<-errs)
-			return // stop
+			http.Error(c.Response(), http.StatusText(500), 500)
+			c.Echo().Logger().Trace(<-errs)
+			return nil // stop
 		}
 		metoopeeve := peeve{}
 		// don't assume input is valid
@@ -259,20 +217,16 @@ func MeTooPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		case nil:
 			break
 		case gorethink.ErrEmptyResult:
-			err = temps.ExecuteTemplate(w, "error", map[string]interface{}{
+			return c.Render(http.StatusNotFound, "error", map[string]interface{}{
 				"Number": "404",
 				"Body": "Not Found",
 				"SessionUsername": username,
 				"Session": session,
 			})
-			if err != nil {
-				log.Panic(err)
-				return // stop
-			}
 		default:
-			http.Error(w, http.StatusText(500), 500)
-			log.Panic(<-errs)
-			return // stop
+			http.Error(c.Response(), http.StatusText(500), 500)
+			c.Echo().Logger().Trace(<-errs)
+			return nil // stop
 		}
 		peevey := &peeve{
 			// Id: bson.NewObjectId(), // create new id
@@ -284,8 +238,9 @@ func MeTooPeeve(c web.C, w http.ResponseWriter, r *http.Request) {
 		}
 		go createPeeve(peevey, errs)
 		if <-errs != nil {
-			log.Panic(<-errs)
+			c.Echo().Logger().Trace(<-errs)
 		}
-		http.Redirect(w, r, "/"+c.URLParams["username"], 302)
+		return c.Redirect(302, "/"+c.Param("username"))
 	}
+	return nil
 }

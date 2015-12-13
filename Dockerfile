@@ -4,7 +4,7 @@ FROM golang:wheezy
 RUN go get golang.org/x/crypto/bcrypt
 RUN go get gopkg.in/dancannon/gorethink.v1
 RUN go get gopkg.in/boj/redistore.v1
-RUN go get github.com/zenazn/goji
+RUN go get github.com/labstack/echo
 
 COPY . /go/src/github.com/gabeio/whatannoysme
 

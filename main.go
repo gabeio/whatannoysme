@@ -3,11 +3,11 @@ package main
 import (
 	"os"
 	"log"
-	"flag"
 	"html/template"
 
-	// goji
-	"github.com/zenazn/goji"
+	// echo
+	"github.com/labstack/echo"
+	mw "github.com/labstack/echo/middleware"
 
 	// rethink
 	rethink "gopkg.in/dancannon/gorethink.v1"
@@ -18,8 +18,9 @@ import (
 
 var (
 	// load & cache all templates
-	temps *template.Template = template.Must(template.ParseGlob(os.Getenv("GOPATH") +
-		"/src/github.com/gabeio/whatannoysme/templates/*.html"))
+	temps = &Template{
+	    templates: template.Must(template.ParseGlob("templates/*.html")),
+	}
 	// session name
 	sessionName = "wam"
 	// rethink session
@@ -68,25 +69,28 @@ func main() {
 	// max session length
 	redisStore.SetMaxAge(7 * 24 * 3600) // 7 days
 
-	// goji
-	goji.Use(textHtml) // serve text/html
-	goji.Post("/too", MeTooPeeve)
-	goji.Get("/", IndexTemplate)
-	goji.Get("/login", LoginTemplate)
-	goji.Post("/login", Login)
-	goji.Get("/logout", Logout) // REMOVE THIS!
-	goji.Post("/logout", Logout)
-	goji.Get("/signup", SignupTemplate)
-	goji.Post("/signup", CreateUser)
-	goji.Get("/search", Search)
-	goji.Post("/search", Search)
-	goji.Get("/:username", GetPeeves)
-	goji.Post("/:username/create", CreatePeeve)
-	goji.Post("/:username/delete", DeletePeeve)
-	goji.Get("/:username/settings", SettingsTemplate)
-	goji.Post("/:username/settings", Settings)
-	flag.Set("bind", getSocket()) // set port to listen on
-	goji.Serve()
+	// echo setup
+	e := echo.New()
+	// e.Debug()
+	e.Use(mw.Recover())
+	e.HTTP2(true)
+	e.SetRenderer(temps) // connect render(er)
+	e.Post("/too", MeTooPeeve)
+	e.Get("/", IndexTemplate)
+	e.Get("/login", LoginTemplate)
+	e.Post("/login", Login)
+	e.Get("/logout", Logout) // REMOVE THIS!
+	e.Post("/logout", Logout)
+	e.Get("/signup", SignupTemplate)
+	e.Post("/signup", CreateUser)
+	e.Get("/search", Search)
+	e.Post("/search", Search)
+	e.Get("/:username", GetPeeves)
+	e.Post("/:username/create", CreatePeeve)
+	e.Post("/:username/delete", DeletePeeve)
+	e.Get("/:username/settings", SettingsTemplate)
+	e.Post("/:username/settings", Settings)
+	e.Run(getSocket())
 }
 
 func getSocket() string {
