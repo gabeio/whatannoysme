@@ -10,7 +10,7 @@ COPY . /go/src/github.com/gabeio/whatannoysme
 
 RUN go install github.com/gabeio/whatannoysme
 
-RUN cd /go/src/github.com/gabeio/whatannoysme
+WORKDIR /go/src/github.com/gabeio/whatannoysme
 
 ENTRYPOINT /go/bin/whatannoysme
 
