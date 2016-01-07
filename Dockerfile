@@ -1,4 +1,7 @@
-FROM golang:wheezy
+FROM golang:alpine
+
+# git/hg required for "go get" & clean apk cache for smallest image size
+RUN apk add --update git mercurial && rm -rf /var/cache/apk/*
 
 # if we install these first the build will be cached
 RUN go get golang.org/x/crypto/bcrypt
