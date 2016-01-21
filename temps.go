@@ -1,12 +1,12 @@
 package main
 
 import (
-	"io"
 	"html/template"
+	"io"
 )
 
 type Template struct {
-    templates *template.Template
+	templates *template.Template
 }
 
 func (t *Template) Render(w io.Writer, name string, data interface{}) error {

@@ -69,17 +69,17 @@ func Search(c *echo.Context) error {
 		c.Echo().Logger().Trace(err)
 	}
 	username, _ = session.Values["username"].(string) // convert to string
-	c.Request().ParseForm() // translate form
-	c.Request().ParseMultipartForm(1000000) // translate multipart 1Mb limit
+	c.Request().ParseForm()                           // translate form
+	c.Request().ParseMultipartForm(1000000)           // translate multipart 1Mb limit
 	f := c.Request().Form
 	switch {
 	case f["q"] == nil, len(f["q"]) != 1:
 		// if query isn't defined or isn't an array of 1 element
 		return c.Render(http.StatusNotFound, "error", map[string]interface{}{
-			"Number": "404",
-			"Body": "Not Found",
+			"Number":          "404",
+			"Body":            "Not Found",
 			"SessionUsername": username, // this might be blank
-			"Session": session, // this might be blank
+			"Session":         session,  // this might be blank
 		})
 		if err != nil {
 			c.Echo().Logger().Trace(err)
@@ -107,10 +107,10 @@ func Search(c *echo.Context) error {
 			return nil // stop
 		}
 		return c.Render(http.StatusOK, "search", map[string]interface{}{
-			"Users": users,
-			"Peeves": peeves,
+			"Users":           users,
+			"Peeves":          peeves,
 			"SessionUsername": username,
-			"Session": session,
+			"Session":         session,
 		})
 		if err != nil {
 			c.Echo().Logger().Trace(err)

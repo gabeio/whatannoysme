@@ -1,9 +1,9 @@
 package main
 
 import (
-	"time"
-	"strings"
 	"net/http"
+	"strings"
+	"time"
 
 	// golang.org/x/crypto
 	"golang.org/x/crypto/bcrypt"
@@ -24,7 +24,7 @@ func CreateUser(c *echo.Context) error {
 	if username != "" {
 		return c.Redirect(302, "/"+username)
 	}
-	c.Request().ParseForm() // translate form
+	c.Request().ParseForm()                 // translate form
 	c.Request().ParseMultipartForm(1000000) // translate multipart 1Mb limit
 	f := c.Request().Form
 	switch {
@@ -110,9 +110,9 @@ func CreateUser(c *echo.Context) error {
 	newuser := &user{
 		// Id: bson.NewObjectId(),
 		Username: f["username"][0],
-		Hash: string(hash),
-		Email: f["email"][0],
-		Joined: time.Now(),
+		Hash:     string(hash),
+		Email:    f["email"][0],
+		Joined:   time.Now(),
 	}
 	go createUser(newuser, errs)
 	if <-errs != nil {
@@ -138,7 +138,7 @@ func Login(c *echo.Context) error {
 	if username != "" {
 		return c.Redirect(302, "/"+username)
 	}
-	c.Request().ParseForm() // translate form
+	c.Request().ParseForm()                 // translate form
 	c.Request().ParseMultipartForm(1000000) // translate multipart 1Mb limit
 	f := c.Request().Form
 	switch {
@@ -236,7 +236,7 @@ func Settings(c *echo.Context) error {
 		c.Echo().Logger().Trace(<-errs)
 		return nil // stop
 	}
-	c.Request().ParseForm() // translate form
+	c.Request().ParseForm()                 // translate form
 	c.Request().ParseMultipartForm(1000000) // translate multipart 1Mb limit
 	f := c.Request().Form
 	if len(f) > 0 {
@@ -249,7 +249,7 @@ func Settings(c *echo.Context) error {
 		if len(f["password"]) == 2 && f["password"][0] == f["password"][1] {
 			thisuser.setPassword(f["password"][0])
 		}
-	}else{
+	} else {
 		http.Error(c.Response(), http.StatusText(500), 500)
 		return nil // stop
 	}

@@ -25,13 +25,13 @@ type (
 	}
 
 	peeve struct {
-		Id        string    `gorethink:"id,omitempty"`      // the id of this peeve
-		Root      string    `gorethink:"root"`              // original user to create the peeve
-		Parent    string    `gorethink:"parent,omitempty"` // person +1 toward the origin
+		Id     string `gorethink:"id,omitempty"`     // the id of this peeve
+		Root   string `gorethink:"root"`             // original user to create the peeve
+		Parent string `gorethink:"parent,omitempty"` // person +1 toward the origin
 		// parent must be blank if this peeve is the origin
-		UserId    string    `gorethink:"user"`              // the user who owns this version
-		Body      string    `gorethink:"body"`              // the peeve's text
-		Timestamp time.Time `gorethink:"timestamp"`         // when this version of the peeve was made
+		UserId    string    `gorethink:"user"`      // the user who owns this version
+		Body      string    `gorethink:"body"`      // the peeve's text
+		Timestamp time.Time `gorethink:"timestamp"` // when this version of the peeve was made
 	}
 
 	peeveAndUser struct {
@@ -42,40 +42,40 @@ type (
 		LastName  string    `gorethink:"lastname,omitempty"`
 		Email     string    `gorethink:"email,omitempty"`
 		Joined    time.Time `gorethink:"joined,omitempty"`
-		Root      string    `gorethink:"root,omitempty"`              // original user to create the peeve
+		Root      string    `gorethink:"root,omitempty"`   // original user to create the peeve
 		Parent    string    `gorethink:"parent,omitempty"` // person +1 toward the origin
 		// parent must be blank if this peeve is the origin
-		UserId    string    `gorethink:"user,omitempty"`              // the user who owns this version
-		Body      string    `gorethink:"body,omitempty"`              // the peeve's text
-		Timestamp time.Time `gorethink:"timestamp,omitempty"`         // when this version of the peeve was made
+		UserId    string    `gorethink:"user,omitempty"`      // the user who owns this version
+		Body      string    `gorethink:"body,omitempty"`      // the peeve's text
+		Timestamp time.Time `gorethink:"timestamp,omitempty"` // when this version of the peeve was made
 	}
 )
 
 // struct functions
 
-func (u *user) setFirstName(firstName string) (error) {
+func (u *user) setFirstName(firstName string) error {
 	_, err := r.Table("users").Get(u.Id).Update(map[string]interface{}{
 		"firstname": firstName,
 	}).RunWrite(rethinkSession)
 	return err
 }
 
-func (u *user) setLastName(lastName string) (error) {
+func (u *user) setLastName(lastName string) error {
 	_, err := r.Table("users").Get(u.Id).Update(map[string]interface{}{
 		"lastname": lastName,
 	}).RunWrite(rethinkSession)
 	return err
 }
 
-func (u *user) setPassword(password string) (error) {
+func (u *user) setPassword(password string) error {
 	_, err := r.Table("users").Get(u.Id).Update(map[string]interface{}{
 		"hash": bcryptHash(password),
 	}).RunWrite(rethinkSession)
 	return err
 }
 
-func (u *user) FullName() (string) {
-	return u.FirstName+" "+u.LastName
+func (u *user) FullName() string {
+	return u.FirstName + " " + u.LastName
 }
 
 // func (p *peeve) User() (user) {

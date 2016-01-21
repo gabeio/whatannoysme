@@ -1,11 +1,11 @@
 package main
 
 import (
-	"os"
 	"log"
+	"net/url"
+	"os"
 	"strconv"
 	"strings"
-	"net/url"
 
 	// rethink
 	r "gopkg.in/dancannon/gorethink.v1"
@@ -31,17 +31,17 @@ func getRethinkSession(sessionChan chan *r.Session) {
 		log.Fatal("RETHINK Env Undefined")
 	}
 	session, err := r.Connect(r.ConnectOpts{
-		Address: rethinkurl,
+		Address:  rethinkurl,
 		Database: "whatannoysme",
-	    MaxIdle: 1,
-	    MaxOpen: 10,
+		MaxIdle:  1,
+		MaxOpen:  10,
 		// DiscoverHosts: true,
 	})
 	session.Use(os.Getenv("RETHINK_DB"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	sessionChan<- session
+	sessionChan <- session
 }
 
 func getRediStore(redisChan chan *redis.RediStore) {
@@ -65,8 +65,7 @@ func getRediStore(redisChan chan *redis.RediStore) {
 			redisPassword, _ = redisURL.User.Password()
 		}
 		redisHostPort = redisURL.Host
-		if redisHostPortArray := strings.Split(redisURL.Host, ":");
-			len(redisHostPortArray) < 2 {
+		if redisHostPortArray := strings.Split(redisURL.Host, ":"); len(redisHostPortArray) < 2 {
 			// if the host can't be split by : then append default redis port
 			redisHostPort += ":6379"
 		}
@@ -91,19 +90,19 @@ func getRediStore(redisChan chan *redis.RediStore) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	redisChan<- redisStore
+	redisChan <- redisStore
 }
 
 // create
 
 func createUser(user interface{}, done chan error) {
 	_, err := r.Table("users").Insert(user).RunWrite(rethinkSession)
-	done<- err
+	done <- err
 }
 
 func createPeeve(peeve interface{}, done chan error) {
 	_, err := r.Table("peeves").Insert(peeve).RunWrite(rethinkSession)
-	done<- err
+	done <- err
 }
 
 // get
@@ -116,7 +115,7 @@ func getUsers(username string, users interface{}, done chan error) {
 	if err != nil {
 		log.Panic(err)
 	}
-	done<- cursor.All(users)
+	done <- cursor.All(users)
 }
 
 func getPeeves(userId string, peeves interface{}, done chan error) {
@@ -129,7 +128,7 @@ func getPeeves(userId string, peeves interface{}, done chan error) {
 	if err != nil {
 		log.Panic(err)
 	}
-	done<- cursor.All(peeves)
+	done <- cursor.All(peeves)
 }
 
 // get one
@@ -142,19 +141,19 @@ func getOneUser(username string, user interface{}, done chan error) {
 	if err != nil {
 		log.Panic(err)
 	}
-	done<- cursor.One(user)
+	done <- cursor.One(user)
 }
 
 func getOnePeeve(peeveId string, userId string, peeve interface{}, done chan error) {
 	cursor, err := r.Table("peeves").Filter(map[string]interface{}{
-		"id": peeveId,
+		"id":   peeveId,
 		"user": userId,
 	}).Run(rethinkSession)
 	defer cursor.Close()
 	if err != nil {
 		log.Panic(err)
 	}
-	done<- cursor.One(peeve)
+	done <- cursor.One(peeve)
 }
 
 // get count
@@ -167,7 +166,7 @@ func getCountUsername(username string, count interface{}, done chan error) {
 	if err != nil {
 		log.Panic(err)
 	}
-	done<- cursor.One(count)
+	done <- cursor.One(count)
 }
 
 // search
@@ -181,7 +180,7 @@ func searchUser(search string, users interface{}, done chan error) {
 	if err != nil {
 		log.Panic(err)
 	}
-	done<- cursor.All(users)
+	done <- cursor.All(users)
 }
 
 func searchPeeve(query string, peeves interface{}, done chan error) {
@@ -195,7 +194,7 @@ func searchPeeve(query string, peeves interface{}, done chan error) {
 	if err != nil {
 		log.Panic(err)
 	}
-	done<- cursor.All(peeves)
+	done <- cursor.All(peeves)
 }
 
 func searchPeeveField(query string, field string, peeves interface{}, done chan error) {
@@ -204,7 +203,7 @@ func searchPeeveField(query string, field string, peeves interface{}, done chan 
 	if err != nil {
 		log.Panic(err)
 	}
-	done<- cursor.All(peeves)
+	done <- cursor.All(peeves)
 }
 
 // drop one
@@ -212,13 +211,13 @@ func searchPeeveField(query string, field string, peeves interface{}, done chan 
 func dropOneUser(userId string, done chan error) {
 	log.Fatal("dont run this")
 	_, err := r.Table("users").Get(userId).Delete().RunWrite(rethinkSession)
-	done<- err
+	done <- err
 }
 
 func dropOnePeeve(peeveId string, userId string, done chan error) {
 	_, err := r.Table("peeves").Filter(map[string]interface{}{
-		"id": peeveId,
+		"id":   peeveId,
 		"user": userId,
 	}).Limit(1).Delete().RunWrite(rethinkSession)
-	done<- err
+	done <- err
 }
