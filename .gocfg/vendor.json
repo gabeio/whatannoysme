@@ -1,0 +1,77 @@
+{
+  "GitRepos": {
+    "vendor/src/github.com/Sirupsen/logrus": {
+      "URI": "https://github.com/Sirupsen/logrus",
+      "Ref": "f7f79f729e0fbe2fcc061db48a9ba0263f588252"
+    },
+    "vendor/src/github.com/cenkalti/backoff": {
+      "URI": "https://github.com/cenkalti/backoff",
+      "Ref": "4dc77674aceaabba2c7e3da25d4c823edfb73f99"
+    },
+    "vendor/src/github.com/dancannon/gorethink": {
+      "URI": "https://github.com/dancannon/gorethink",
+      "Ref": "ff457cac6a529d9749d841a733d76e8305cba3c8"
+    },
+    "vendor/src/github.com/garyburd/redigo": {
+      "URI": "https://github.com/garyburd/redigo",
+      "Ref": "836b6e58b3358112c8291565d01c35b8764070d7"
+    },
+    "vendor/src/github.com/golang/protobuf": {
+      "URI": "https://github.com/golang/protobuf",
+      "Ref": "2402d76f3d41f928c7902a765dfc872356dd3aad"
+    },
+    "vendor/src/github.com/gorilla/context": {
+      "URI": "https://github.com/gorilla/context",
+      "Ref": "1c83b3eabd45b6d76072b66b746c20815fb2872d"
+    },
+    "vendor/src/github.com/gorilla/securecookie": {
+      "URI": "https://github.com/gorilla/securecookie",
+      "Ref": "e95799a481bbcc3d01c2ad5178524cb8bec9f370"
+    },
+    "vendor/src/github.com/gorilla/sessions": {
+      "URI": "https://github.com/gorilla/sessions",
+      "Ref": "3752dbe3d898496114ebb398c8960ff127cbbe93"
+    },
+    "vendor/src/github.com/hailocab/go-hostpool": {
+      "URI": "https://github.com/hailocab/go-hostpool",
+      "Ref": "50839ee41f32bfca8d03a183031aa634b2dc1c64"
+    },
+    "vendor/src/github.com/labstack/echo": {
+      "URI": "https://github.com/labstack/echo",
+      "Ref": "ec83e2407f257c0fa7b5ee17727d175d9d6e9f1a"
+    },
+    "vendor/src/github.com/labstack/gommon": {
+      "URI": "https://github.com/labstack/gommon",
+      "Ref": "0764305a9af697a66da7bda2ea52672b7eca5a06"
+    },
+    "vendor/src/github.com/mattn/go-colorable": {
+      "URI": "https://github.com/mattn/go-colorable",
+      "Ref": "3dac7b4f76f6e17fb39b768b89e3783d16e237fe"
+    },
+    "vendor/src/github.com/mattn/go-isatty": {
+      "URI": "https://github.com/mattn/go-isatty",
+      "Ref": "56b76bdf51f7708750eac80fa38b952bb9f32639"
+    },
+    "vendor/src/golang.org/x/crypto": {
+      "URI": "https://go.googlesource.com/crypto",
+      "Ref": "3760e016850398b85094c4c99e955b8c3dea5711"
+    },
+    "vendor/src/golang.org/x/net": {
+      "URI": "https://go.googlesource.com/net",
+      "Ref": "b2ed34f6fc8d65cc6a090fb87692ea6b1162fddd"
+    },
+    "vendor/src/gopkg.in/boj/redistore.v1": {
+      "URI": "https://gopkg.in/boj/redistore.v1",
+      "Ref": "9d1554b400d726c7aa54b6e4a836f273b72b97f7"
+    },
+    "vendor/src/gopkg.in/dancannon/gorethink.v1": {
+      "URI": "https://gopkg.in/dancannon/gorethink.v1",
+      "Ref": "e2cef022d0495329dfb0635991de76efcab5cf50"
+    },
+    "vendor/src/gopkg.in/fatih/pool.v2": {
+      "URI": "https://gopkg.in/fatih/pool.v2",
+      "Ref": "cba550ebf9bce999a02e963296d4bc7a486cb715"
+    }
+  },
+  "MercurialRepos": {}
+}
