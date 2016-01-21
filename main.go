@@ -1,9 +1,9 @@
 package main
 
 import (
-	"os"
-	"log"
 	"html/template"
+	"log"
+	"os"
 
 	// echo
 	"github.com/labstack/echo"
@@ -19,7 +19,7 @@ import (
 var (
 	// load & cache all templates
 	temps = &Template{
-	    templates: template.Must(template.ParseGlob("templates/*.html")),
+		templates: template.Must(template.ParseGlob("templates/*.html")),
 	}
 	// session name
 	sessionName = "wam"
@@ -32,7 +32,7 @@ var (
 	// present working directory
 	pwd string
 	// errors
-	err error
+	err  error
 	errs = make(chan error)
 )
 

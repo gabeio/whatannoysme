@@ -1,8 +1,8 @@
 package main
 
 import (
-	"time"
 	"net/http"
+	"time"
 
 	// echo
 	"github.com/labstack/echo"
@@ -24,10 +24,10 @@ func GetPeeves(c *echo.Context) error {
 		break
 	case gorethink.ErrEmptyResult:
 		return c.Render(http.StatusNotFound, "error", map[string]interface{}{
-			"Number": "404",
-			"Body": "Not Found",
+			"Number":          "404",
+			"Body":            "Not Found",
 			"SessionUsername": username, // this might be blank
-			"Session": session, // this might be blank
+			"Session":         session,  // this might be blank
 		})
 	default:
 		c.Echo().Logger().Trace(<-errs)
@@ -45,10 +45,10 @@ func GetPeeves(c *echo.Context) error {
 		return nil // stop
 	}
 	return c.Render(http.StatusOK, "user", map[string]interface{}{
-		"Peeves": peeves,
-		"User": thisUser,
+		"Peeves":          peeves,
+		"User":            thisUser,
 		"SessionUsername": username,
-		"Session": session,
+		"Session":         session,
 	})
 }
 
@@ -58,25 +58,25 @@ func CreatePeeve(c *echo.Context) error {
 		c.Echo().Logger().Trace(err)
 	}
 	username, _ := session.Values["username"].(string) // convert to string
-	if username != c.Param("username") { // if user logged isn't this user
+	if username != c.Param("username") {               // if user logged isn't this user
 		return c.Redirect(302, "/"+c.Param("username"))
 	}
-	c.Request().ParseForm() // translate form
+	c.Request().ParseForm()                 // translate form
 	c.Request().ParseMultipartForm(1000000) // translate multipart 1Mb limit
 	// don't do anything before we know the form is what we want
 	f := c.Request().Form
 	switch {
 	case f["body"] == nil, len(f["body"]) != 1, f["body"][0] == "":
 		return c.Render(http.StatusOK, "user", map[string]interface{}{
-			"Error": "Invalid Body",
+			"Error":           "Invalid Body",
 			"SessionUsername": username,
-			"Session": session,
+			"Session":         session,
 		})
 	case len(f["body"][0]) > 140:
 		return c.Render(http.StatusOK, "user", map[string]interface{}{
-			"Error": "Peeve Too Long",
+			"Error":           "Peeve Too Long",
 			"SessionUsername": username,
-			"Session": session,
+			"Session":         session,
 		})
 	default:
 		user := user{}
@@ -86,10 +86,10 @@ func CreatePeeve(c *echo.Context) error {
 			break
 		case gorethink.ErrEmptyResult:
 			return c.Render(http.StatusNotFound, "error", map[string]interface{}{
-				"Number": "404",
-				"Body": "Not Found",
+				"Number":          "404",
+				"Body":            "Not Found",
 				"SessionUsername": username,
-				"Session": session,
+				"Session":         session,
 			})
 		default:
 			http.Error(c.Response(), http.StatusText(500), 500)
@@ -100,8 +100,8 @@ func CreatePeeve(c *echo.Context) error {
 			// Id: bson.NewObjectId(),
 			Root: user.Id,
 			// as this is the root no parent
-			UserId: user.Id, // create a peeve == owner
-			Body: f["body"][0],
+			UserId:    user.Id, // create a peeve == owner
+			Body:      f["body"][0],
 			Timestamp: time.Now(),
 		}, errs)
 		if <-errs != nil {
@@ -118,10 +118,10 @@ func DeletePeeve(c *echo.Context) error {
 		c.Echo().Logger().Trace(err)
 	}
 	username, _ := session.Values["username"].(string) // convert to string
-	if username != c.Param("username") { // if user logged isn't this user
+	if username != c.Param("username") {               // if user logged isn't this user
 		return c.Redirect(302, "/"+c.Param("username"))
 	}
-	c.Request().ParseForm() // translate form
+	c.Request().ParseForm()                 // translate form
 	c.Request().ParseMultipartForm(1000000) // translate multipart 1Mb limit
 	// don't do anything before we know the form is what we want
 	f := c.Request().Form
@@ -133,7 +133,7 @@ func DeletePeeve(c *echo.Context) error {
 			// "Peeves": peeves,
 			// "User": user,
 			"SessionUsername": username,
-			"Session": session,
+			"Session":         session,
 		})
 	default:
 		user := user{}
@@ -143,10 +143,10 @@ func DeletePeeve(c *echo.Context) error {
 			break
 		case gorethink.ErrEmptyResult:
 			return c.Render(http.StatusNotFound, "error", map[string]interface{}{
-				"Number": "404",
-				"Body": "Not Found",
+				"Number":          "404",
+				"Body":            "Not Found",
 				"SessionUsername": username,
-				"Session": session,
+				"Session":         session,
 			})
 		default:
 			http.Error(c.Response(), http.StatusText(500), 500)
@@ -173,7 +173,7 @@ func MeTooPeeve(c *echo.Context) error {
 		// don't allow a user to metoo their own peeve
 		return c.Redirect(302, "/"+c.Param("username"))
 	}
-	c.Request().ParseForm() // translate form
+	c.Request().ParseForm()                 // translate form
 	c.Request().ParseMultipartForm(1000000) // translate multipart 1Mb limit
 	// don't do anything before we know the form is what we want
 	f := c.Request().Form
@@ -181,16 +181,16 @@ func MeTooPeeve(c *echo.Context) error {
 	// needs to be length 36 as rethinkdb's ids are len 36
 	case f["id"] == nil, len(f["id"]) != 1, len(f["id"][0]) != 36:
 		return c.Render(http.StatusOK, "user", map[string]interface{}{
-			"Error": "Invalid Id",
+			"Error":           "Invalid Id",
 			"SessionUsername": username,
-			"Session": session,
+			"Session":         session,
 		})
 	// needs to be length 36 as rethinkdb's ids are len 36
 	case f["user"] == nil, len(f["user"]) != 1, len(f["user"][0]) != 36:
 		return c.Render(http.StatusOK, "user", map[string]interface{}{
-			"Error": "Invalid User",
+			"Error":           "Invalid User",
 			"SessionUsername": username,
-			"Session": session,
+			"Session":         session,
 		})
 	default:
 		user := user{}
@@ -200,10 +200,10 @@ func MeTooPeeve(c *echo.Context) error {
 			break
 		case gorethink.ErrEmptyResult:
 			return c.Render(http.StatusNotFound, "error", map[string]interface{}{
-				"Number": "404",
-				"Body": "Not Found",
+				"Number":          "404",
+				"Body":            "Not Found",
 				"SessionUsername": username,
-				"Session": session,
+				"Session":         session,
 			})
 		default:
 			http.Error(c.Response(), http.StatusText(500), 500)
@@ -218,10 +218,10 @@ func MeTooPeeve(c *echo.Context) error {
 			break
 		case gorethink.ErrEmptyResult:
 			return c.Render(http.StatusNotFound, "error", map[string]interface{}{
-				"Number": "404",
-				"Body": "Not Found",
+				"Number":          "404",
+				"Body":            "Not Found",
 				"SessionUsername": username,
-				"Session": session,
+				"Session":         session,
 			})
 		default:
 			http.Error(c.Response(), http.StatusText(500), 500)
@@ -230,11 +230,11 @@ func MeTooPeeve(c *echo.Context) error {
 		}
 		peevey := &peeve{
 			// Id: bson.NewObjectId(), // create new id
-			Root: metoopeeve.Root, // peeve origin
-			Parent: metoopeeve.UserId, // who I got it from
-			UserId: user.Id, // who owns this peeve
-			Body: metoopeeve.Body, // original body
-			Timestamp: time.Now(), // when I reposted it
+			Root:      metoopeeve.Root,   // peeve origin
+			Parent:    metoopeeve.UserId, // who I got it from
+			UserId:    user.Id,           // who owns this peeve
+			Body:      metoopeeve.Body,   // original body
+			Timestamp: time.Now(),        // when I reposted it
 		}
 		go createPeeve(peevey, errs)
 		if <-errs != nil {
