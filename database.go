@@ -173,9 +173,10 @@ func getCountUsername(username string, count interface{}, done chan error) {
 // search
 
 func searchUser(search string, users interface{}, done chan error) {
-	cursor, err := r.Table("users").Filter(func (row r.Term) r.Term {
-		return row.Field("username").Match(search)
-	}).Run(rethinkSession)
+	cursor, err := r.Table("users").
+		Filter(r.Row.Field("username").
+		Match(search)).
+		Run(rethinkSession)
 	defer cursor.Close()
 	if err != nil {
 		log.Panic(err)
@@ -183,14 +184,13 @@ func searchUser(search string, users interface{}, done chan error) {
 	done<- cursor.All(users)
 }
 
-func searchPeeve(search string, peeves interface{}, done chan error) {
-	cursor, err := r.Table("peeves").Filter(func (row r.Term) r.Term {
-		return row.Field("body").Match(search)
-	}).Filter(func (row r.Term) r.Term {
-		return row.Field("user").Eq(row.Field("root"))
-	}).InnerJoin(r.Table("users"), func (peeveRow r.Term, userRow r.Term) r.Term {
-		return peeveRow.Field("user").Eq(userRow.Field("id"))
-	}).Zip().Run(rethinkSession)
+func searchPeeve(query string, peeves interface{}, done chan error) {
+	cursor, err := r.Table("peeves").
+		Filter(r.Row.Field("body").Match(query)).
+		Filter(r.Row.Field("user").Eq(r.Row.Field("root"))).
+		EqJoin("user", r.Table("users")).
+		Zip().
+		Run(rethinkSession)
 	defer cursor.Close()
 	if err != nil {
 		log.Panic(err)
@@ -198,10 +198,8 @@ func searchPeeve(search string, peeves interface{}, done chan error) {
 	done<- cursor.All(peeves)
 }
 
-func searchPeeveField(search string, field string, peeves interface{}, done chan error) {
-	cursor, err := r.Table("peeves").Filter(func (row r.Term) r.Term {
-		return row.Field(field).Match(search)
-	}).Run(rethinkSession)
+func searchPeeveField(query string, field string, peeves interface{}, done chan error) {
+	cursor, err := r.Table("peeves").Filter(r.Row.Field(field).Match(query)).Run(rethinkSession)
 	defer cursor.Close()
 	if err != nil {
 		log.Panic(err)

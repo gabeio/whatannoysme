@@ -71,7 +71,6 @@ func Search(c *echo.Context) error {
 	username, _ = session.Values["username"].(string) // convert to string
 	c.Request().ParseForm() // translate form
 	c.Request().ParseMultipartForm(1000000) // translate multipart 1Mb limit
-	// TODO: actually search something instead of just redirect to <user>
 	f := c.Request().Form
 	switch {
 	case f["q"] == nil, len(f["q"]) != 1:
