@@ -221,6 +221,6 @@ func dropOnePeeve(peeveId string, userId string, done chan error) {
 	_, err := r.Table("peeves").Filter(map[string]interface{}{
 		"id": peeveId,
 		"user": userId,
-	}).Delete().RunWrite(rethinkSession)
+	}).Limit(1).Delete().RunWrite(rethinkSession)
 	done<- err
 }
