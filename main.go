@@ -47,7 +47,13 @@ var (
 		ContentSecurityPolicy: "default-src 'self';" +
 			"script-src 'self' 'unsafe-inline' cdnjs.cloudflare.com maxcdn.bootstrapcdn.com;" +
 			"style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com maxcdn.bootstrapcdn.com;" +
-			"font-src maxcdn.bootstrapcdn.com",
+			"img-src 'none';"+
+			"connect-src 'none';"+
+			"font-src maxcdn.bootstrapcdn.com;"+
+			"object-src 'none';"+
+			"media-src 'none';"+
+			"frame-src 'none';"+
+			"",
 	})
 )
 
