@@ -9,6 +9,9 @@ import (
 	"github.com/labstack/echo"
 	mw "github.com/labstack/echo/middleware"
 
+	// secure
+	secure "gopkg.in/unrolled/secure.v1"
+
 	// rethink
 	rethink "gopkg.in/dancannon/gorethink.v1"
 
@@ -34,6 +37,24 @@ var (
 	// errors
 	err  error
 	errs = make(chan error)
+	// security settings
+	securemw = secure.New(secure.Options{
+		AllowedHosts:       []string{"whatannoys.me", "www.whatannoys.me"},
+		SSLProxyHeaders:    map[string]string{"X-Forwarded-Proto": "https"},
+		FrameDeny:          true,
+		ContentTypeNosniff: true,
+		BrowserXssFilter:   true,
+		ContentSecurityPolicy: "default-src 'self';" +
+			"script-src 'self' 'unsafe-inline' cdnjs.cloudflare.com maxcdn.bootstrapcdn.com;" +
+			"style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com maxcdn.bootstrapcdn.com;" +
+			"img-src 'none';"+
+			"connect-src 'none';"+
+			"font-src maxcdn.bootstrapcdn.com;"+
+			"object-src 'none';"+
+			"media-src 'none';"+
+			"frame-src 'none';"+
+			"",
+	})
 )
 
 func main() {
@@ -72,6 +93,7 @@ func main() {
 	// echo setup
 	e := echo.New()
 	// e.Debug()
+	e.Use(securemw.Handler)
 	e.Use(mw.Recover())
 	e.HTTP2(true)
 	e.SetRenderer(temps) // connect render(er)
