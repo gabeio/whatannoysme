@@ -14,7 +14,7 @@ import (
 func GetPeeves(c *echo.Context) error {
 	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		c.Echo().Logger().Trace(err)
+		c.Echo().Logger().Debug(err)
 	}
 	username, _ := session.Values["username"].(string) // convert to string
 	thisUser := user{}
@@ -30,7 +30,7 @@ func GetPeeves(c *echo.Context) error {
 			"Session":         session,  // this might be blank
 		})
 	default:
-		c.Echo().Logger().Trace(<-errs)
+		c.Echo().Logger().Debug(<-errs)
 		return nil // stop
 	}
 	peeves := []peeve{}
@@ -41,7 +41,7 @@ func GetPeeves(c *echo.Context) error {
 	case gorethink.ErrEmptyResult:
 		break // none is okay
 	default:
-		c.Echo().Logger().Trace(<-errs)
+		c.Echo().Logger().Debug(<-errs)
 		return nil // stop
 	}
 	return c.Render(http.StatusOK, "user", map[string]interface{}{
@@ -55,7 +55,7 @@ func GetPeeves(c *echo.Context) error {
 func CreatePeeve(c *echo.Context) error {
 	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		c.Echo().Logger().Trace(err)
+		c.Echo().Logger().Debug(err)
 	}
 	username, _ := session.Values["username"].(string) // convert to string
 	if username != c.Param("username") {               // if user logged isn't this user
@@ -93,7 +93,7 @@ func CreatePeeve(c *echo.Context) error {
 			})
 		default:
 			http.Error(c.Response(), http.StatusText(500), 500)
-			c.Echo().Logger().Trace(<-errs)
+			c.Echo().Logger().Debug(<-errs)
 			return nil // stop
 		}
 		go createPeeve(&peeve{
@@ -105,7 +105,7 @@ func CreatePeeve(c *echo.Context) error {
 			Timestamp: time.Now(),
 		}, errs)
 		if <-errs != nil {
-			c.Echo().Logger().Trace(<-errs)
+			c.Echo().Logger().Debug(<-errs)
 		}
 		return c.Redirect(302, "/"+c.Param("username"))
 	}
@@ -115,7 +115,7 @@ func CreatePeeve(c *echo.Context) error {
 func DeletePeeve(c *echo.Context) error {
 	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		c.Echo().Logger().Trace(err)
+		c.Echo().Logger().Debug(err)
 	}
 	username, _ := session.Values["username"].(string) // convert to string
 	if username != c.Param("username") {               // if user logged isn't this user
@@ -150,12 +150,12 @@ func DeletePeeve(c *echo.Context) error {
 			})
 		default:
 			http.Error(c.Response(), http.StatusText(500), 500)
-			c.Echo().Logger().Trace(<-errs)
+			c.Echo().Logger().Debug(<-errs)
 			return nil // stop
 		}
 		go dropOnePeeve(f["id"][0], user.Id, errs)
 		if <-errs != nil {
-			c.Echo().Logger().Trace(<-errs)
+			c.Echo().Logger().Debug(<-errs)
 			return nil // stop
 		}
 		return c.Redirect(302, "/"+c.Param("username"))
@@ -166,7 +166,7 @@ func DeletePeeve(c *echo.Context) error {
 func MeTooPeeve(c *echo.Context) error {
 	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		c.Echo().Logger().Trace(err)
+		c.Echo().Logger().Debug(err)
 	}
 	username, _ := session.Values["username"].(string) // convert to string
 	if username == c.Param("username") {
@@ -207,7 +207,7 @@ func MeTooPeeve(c *echo.Context) error {
 			})
 		default:
 			http.Error(c.Response(), http.StatusText(500), 500)
-			c.Echo().Logger().Trace(<-errs)
+			c.Echo().Logger().Debug(<-errs)
 			return nil // stop
 		}
 		metoopeeve := peeve{}
@@ -225,7 +225,7 @@ func MeTooPeeve(c *echo.Context) error {
 			})
 		default:
 			http.Error(c.Response(), http.StatusText(500), 500)
-			c.Echo().Logger().Trace(<-errs)
+			c.Echo().Logger().Debug(<-errs)
 			return nil // stop
 		}
 		peevey := &peeve{
@@ -238,7 +238,7 @@ func MeTooPeeve(c *echo.Context) error {
 		}
 		go createPeeve(peevey, errs)
 		if <-errs != nil {
-			c.Echo().Logger().Trace(<-errs)
+			c.Echo().Logger().Debug(<-errs)
 		}
 		return c.Redirect(302, "/"+c.Param("username"))
 	}

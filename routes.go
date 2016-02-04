@@ -10,7 +10,7 @@ import (
 func IndexTemplate(c *echo.Context) error {
 	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		c.Echo().Logger().Trace(err)
+		c.Echo().Logger().Debug(err)
 	}
 	username, _ := session.Values["username"].(string)
 	if username != "" {
@@ -22,7 +22,7 @@ func IndexTemplate(c *echo.Context) error {
 func SignupTemplate(c *echo.Context) error {
 	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		c.Echo().Logger().Trace(err)
+		c.Echo().Logger().Debug(err)
 	}
 	username, _ := session.Values["username"].(string)
 	if username != "" {
@@ -34,7 +34,7 @@ func SignupTemplate(c *echo.Context) error {
 func LoginTemplate(c *echo.Context) error {
 	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		c.Echo().Logger().Trace(err)
+		c.Echo().Logger().Debug(err)
 	}
 	username, _ := session.Values["username"].(string)
 	if username != "" {
@@ -46,7 +46,7 @@ func LoginTemplate(c *echo.Context) error {
 func SettingsTemplate(c *echo.Context) error {
 	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		c.Echo().Logger().Trace(err)
+		c.Echo().Logger().Debug(err)
 	}
 	username, _ := session.Values["username"].(string)
 	if username == "" {
@@ -66,7 +66,7 @@ func Search(c *echo.Context) error {
 	var username string
 	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		c.Echo().Logger().Trace(err)
+		c.Echo().Logger().Debug(err)
 	}
 	username, _ = session.Values["username"].(string) // convert to string
 	c.Request().ParseForm()                           // translate form
@@ -82,7 +82,7 @@ func Search(c *echo.Context) error {
 			"Session":         session,  // this might be blank
 		})
 		if err != nil {
-			c.Echo().Logger().Trace(err)
+			c.Echo().Logger().Debug(err)
 			return nil // stop
 		}
 	case f["q"] != nil, len(f["q"]) == 1:
@@ -93,7 +93,7 @@ func Search(c *echo.Context) error {
 			break // nil is good
 		default:
 			http.Error(c.Response(), http.StatusText(500), 500)
-			c.Echo().Logger().Trace(<-errs)
+			c.Echo().Logger().Debug(<-errs)
 			return nil // stop
 		}
 		peeves := []peeveAndUser{} // many peeves can be returned
@@ -103,7 +103,7 @@ func Search(c *echo.Context) error {
 			break // nil is good
 		default:
 			http.Error(c.Response(), http.StatusText(500), 500)
-			c.Echo().Logger().Trace(<-errs)
+			c.Echo().Logger().Debug(<-errs)
 			return nil // stop
 		}
 		return c.Render(http.StatusOK, "search", map[string]interface{}{
@@ -113,7 +113,7 @@ func Search(c *echo.Context) error {
 			"Session":         session,
 		})
 		if err != nil {
-			c.Echo().Logger().Trace(err)
+			c.Echo().Logger().Debug(err)
 			return nil // stop
 		}
 		return nil // stop
