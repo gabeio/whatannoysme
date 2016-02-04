@@ -17,6 +17,9 @@ import (
 
 	// redis
 	redis "gopkg.in/boj/redistore.v1"
+
+	// endless
+	"github.com/fvbock/endless"
 )
 
 var (
@@ -112,7 +115,7 @@ func main() {
 	e.Post("/:username/delete", DeletePeeve)
 	e.Get("/:username/settings", SettingsTemplate)
 	e.Post("/:username/settings", Settings)
-	e.Run(getSocket())
+	endless.ListenAndServe(getSocket(), e)
 }
 
 func getSocket() string {
