@@ -18,7 +18,7 @@ import (
 func CreateUser(c *echo.Context) error {
 	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		c.Echo().Logger().Trace(err)
+		c.Echo().Logger().Debug(err)
 	}
 	username, _ := session.Values["username"].(string)
 	if username != "" {
@@ -34,7 +34,7 @@ func CreateUser(c *echo.Context) error {
 			"Error": "Bad Username",
 		})
 		if err != nil {
-			c.Echo().Logger().Trace(err)
+			c.Echo().Logger().Debug(err)
 		}
 		return nil // stop
 	// if password isn't present or there aren't 2 password field(s) or blank
@@ -43,7 +43,7 @@ func CreateUser(c *echo.Context) error {
 			"Error": "Bad Password",
 		})
 		if err != nil {
-			c.Echo().Logger().Trace(err)
+			c.Echo().Logger().Debug(err)
 		}
 		return nil // stop
 	// if email isn't present or there aren't 1 email field(s) or email is blank
@@ -52,7 +52,7 @@ func CreateUser(c *echo.Context) error {
 			"Error": "Bad Email",
 		})
 		if err != nil {
-			c.Echo().Logger().Trace(err)
+			c.Echo().Logger().Debug(err)
 		}
 		return nil // stop
 	// max username length 13
@@ -61,7 +61,7 @@ func CreateUser(c *echo.Context) error {
 			"Error": "Username too long",
 		})
 		if err != nil {
-			c.Echo().Logger().Trace(err)
+			c.Echo().Logger().Debug(err)
 		}
 		return nil // stop
 	// if the two passwords don't match
@@ -70,7 +70,7 @@ func CreateUser(c *echo.Context) error {
 			"Error": "Passwords do not match",
 		})
 		if err != nil {
-			c.Echo().Logger().Trace(err)
+			c.Echo().Logger().Debug(err)
 		}
 		return nil // stop
 	}
@@ -81,7 +81,7 @@ func CreateUser(c *echo.Context) error {
 			"Error": "Username Contains Invalid Characters",
 		})
 		if err != nil {
-			c.Echo().Logger().Trace(err)
+			c.Echo().Logger().Debug(err)
 		}
 		return nil // stop
 	}
@@ -90,21 +90,21 @@ func CreateUser(c *echo.Context) error {
 	var i int
 	go getCountUsername(f["username"][0], &i, errs)
 	if <-errs != nil {
-		c.Echo().Logger().Trace(<-errs)
+		c.Echo().Logger().Debug(<-errs)
 	}
 	if i > 1 {
 		return c.Render(http.StatusOK, "signup", map[string]interface{}{
 			"Error": "Username taken",
 		})
 		if err != nil {
-			c.Echo().Logger().Trace(err)
+			c.Echo().Logger().Debug(err)
 		}
 		return nil // stop
 	}
 	hash, err := bcrypt.GenerateFromPassword(
 		[]byte(f["password"][0]), bcryptStrength)
 	if err != nil {
-		c.Echo().Logger().Trace(err)
+		c.Echo().Logger().Debug(err)
 		return nil // stop
 	}
 	newuser := &user{
@@ -117,14 +117,14 @@ func CreateUser(c *echo.Context) error {
 	go createUser(newuser, errs)
 	if <-errs != nil {
 		http.Error(c.Response(), http.StatusText(500), 500)
-		c.Echo().Logger().Trace(<-errs)
+		c.Echo().Logger().Debug(<-errs)
 		return nil // stop
 	}
 	// session.Values["user"] = user
 	session.Values["username"] = newuser.Username
 	session.Values["hash"] = string(hash)
 	if err = session.Save(c.Request(), c.Response()); err != nil {
-		c.Echo().Logger().Trace("Error saving session: %v", err)
+		c.Echo().Logger().Debug("Error saving session: %v", err)
 	}
 	return c.Redirect(302, "/"+f["username"][0])
 }
@@ -132,7 +132,7 @@ func CreateUser(c *echo.Context) error {
 func Login(c *echo.Context) error {
 	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		c.Echo().Logger().Trace(err)
+		c.Echo().Logger().Debug(err)
 	}
 	username, _ := session.Values["username"].(string)
 	if username != "" {
@@ -147,7 +147,7 @@ func Login(c *echo.Context) error {
 			"Error": "Invalid Username",
 		})
 		if err != nil {
-			c.Echo().Logger().Trace(err)
+			c.Echo().Logger().Debug(err)
 		}
 		return nil // stop
 	case f["password"] == nil, len(f["password"]) != 1, f["password"][0] == "":
@@ -155,7 +155,7 @@ func Login(c *echo.Context) error {
 			"Error": "Invalid Password",
 		})
 		if err != nil {
-			c.Echo().Logger().Trace(err)
+			c.Echo().Logger().Debug(err)
 		}
 		return nil // stop
 	default:
@@ -170,11 +170,11 @@ func Login(c *echo.Context) error {
 				"Error": "Invalid Username or Password",
 			})
 			if err != nil {
-				c.Echo().Logger().Trace(err)
+				c.Echo().Logger().Debug(err)
 			}
 			return nil // stop
 		default:
-			c.Echo().Logger().Trace(<-errs)
+			c.Echo().Logger().Debug(<-errs)
 			return nil // stop
 		}
 		// user found
@@ -189,11 +189,11 @@ func Login(c *echo.Context) error {
 				"Error": "Invalid Username or Password",
 			})
 			if err != nil {
-				c.Echo().Logger().Trace(err)
+				c.Echo().Logger().Debug(err)
 			}
 			return nil // stop
 		default:
-			c.Echo().Logger().Trace(err)
+			c.Echo().Logger().Debug(err)
 			return nil // stop
 		}
 		// correct password
@@ -201,7 +201,7 @@ func Login(c *echo.Context) error {
 		session.Values["username"] = user.Username
 		session.Values["hash"] = user.Hash
 		if err = session.Save(c.Request(), c.Response()); err != nil {
-			c.Echo().Logger().Trace("Error saving session: %v", err)
+			c.Echo().Logger().Debug("Error saving session: %v", err)
 		}
 		return c.Redirect(302, "/"+f["username"][0])
 	}
@@ -211,11 +211,11 @@ func Login(c *echo.Context) error {
 func Logout(c *echo.Context) error {
 	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		c.Echo().Logger().Trace(err)
+		c.Echo().Logger().Debug(err)
 	}
 	session.Options.MaxAge = -1
 	if err = session.Save(c.Request(), c.Response()); err != nil {
-		c.Echo().Logger().Trace("Error saving session: %v", err)
+		c.Echo().Logger().Debug("Error saving session: %v", err)
 	}
 	return c.Redirect(302, "/")
 }
@@ -223,7 +223,7 @@ func Logout(c *echo.Context) error {
 func Settings(c *echo.Context) error {
 	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		c.Echo().Logger().Trace(err)
+		c.Echo().Logger().Debug(err)
 	}
 	username, _ := session.Values["username"].(string)
 	if username != c.Param("username") {
@@ -233,7 +233,7 @@ func Settings(c *echo.Context) error {
 	thisuser := user{}
 	go getOneUser(c.Param("username"), &thisuser, errs)
 	if <-errs != nil {
-		c.Echo().Logger().Trace(<-errs)
+		c.Echo().Logger().Debug(<-errs)
 		return nil // stop
 	}
 	c.Request().ParseForm()                 // translate form

@@ -17,6 +17,9 @@ import (
 
 	// redis
 	redis "gopkg.in/boj/redistore.v1"
+
+	// endless
+	"github.com/fvbock/endless"
 )
 
 var (
@@ -47,12 +50,12 @@ var (
 		ContentSecurityPolicy: "default-src 'self';" +
 			"script-src 'self' 'unsafe-inline' cdnjs.cloudflare.com maxcdn.bootstrapcdn.com;" +
 			"style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com maxcdn.bootstrapcdn.com;" +
-			"img-src 'none';"+
-			"connect-src 'none';"+
-			"font-src maxcdn.bootstrapcdn.com;"+
-			"object-src 'none';"+
-			"media-src 'none';"+
-			"frame-src 'none';"+
+			"img-src 'none';" +
+			"connect-src 'none';" +
+			"font-src maxcdn.bootstrapcdn.com;" +
+			"object-src 'none';" +
+			"media-src 'none';" +
+			"frame-src 'none';" +
 			"",
 	})
 )
@@ -112,7 +115,7 @@ func main() {
 	e.Post("/:username/delete", DeletePeeve)
 	e.Get("/:username/settings", SettingsTemplate)
 	e.Post("/:username/settings", Settings)
-	e.Run(getSocket())
+	endless.ListenAndServe(getSocket(), e)
 }
 
 func getSocket() string {
