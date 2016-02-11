@@ -42,7 +42,7 @@ var (
 	errs = make(chan error)
 	// security settings
 	securemw = secure.New(secure.Options{
-		AllowedHosts:       []string{"whatannoys.me", "www.whatannoys.me"},
+		AllowedHosts:       []string{"whatannoys.me", "www.whatannoys.me", "direct.whatannoys.me"},
 		SSLProxyHeaders:    map[string]string{"X-Forwarded-Proto": "https"},
 		FrameDeny:          true,
 		ContentTypeNosniff: true,
