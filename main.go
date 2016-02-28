@@ -98,7 +98,6 @@ func main() {
 	// e.Debug()
 	e.Use(securemw.Handler)
 	e.Use(mw.Recover())
-	e.HTTP2(true)
 	e.SetRenderer(temps) // connect render(er)
 	e.Post("/too", MeTooPeeve)
 	e.Get("/", IndexTemplate)

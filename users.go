@@ -132,7 +132,7 @@ func CreateUser(c *echo.Context) error {
 func Login(c *echo.Context) error {
 	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		c.Echo().Logger().Debug(err)
+		c.Echo().Logger().Debug("Login.session",err)
 	}
 	username, _ := session.Values["username"].(string)
 	if username != "" {
@@ -143,7 +143,7 @@ func Login(c *echo.Context) error {
 	f := c.Request().Form
 	switch {
 	case f["username"] == nil, len(f["username"]) != 1, f["username"][0] == "":
-		return c.Render(http.StatusOK, "login", map[string]interface{}{
+		c.Render(http.StatusOK, "login", map[string]interface{}{
 			"Error": "Invalid Username",
 		})
 		if err != nil {
@@ -151,7 +151,7 @@ func Login(c *echo.Context) error {
 		}
 		return nil // stop
 	case f["password"] == nil, len(f["password"]) != 1, f["password"][0] == "":
-		return c.Render(http.StatusOK, "login", map[string]interface{}{
+		c.Render(http.StatusOK, "login", map[string]interface{}{
 			"Error": "Invalid Password",
 		})
 		if err != nil {
@@ -166,15 +166,15 @@ func Login(c *echo.Context) error {
 		case nil:
 			break
 		case gorethink.ErrEmptyResult:
-			return c.Render(http.StatusOK, "login", map[string]interface{}{
+			c.Render(http.StatusOK, "login", map[string]interface{}{
 				"Error": "Invalid Username or Password",
 			})
 			if err != nil {
-				c.Echo().Logger().Debug(err)
+				c.Echo().Logger().Debug("Login.default>ErrEmptyResult",err)
 			}
 			return nil // stop
 		default:
-			c.Echo().Logger().Debug(<-errs)
+			c.Echo().Logger().Debug("Login.default>default[0]",<-errs)
 			return nil // stop
 		}
 		// user found
@@ -185,15 +185,15 @@ func Login(c *echo.Context) error {
 			break
 		case bcrypt.ErrMismatchedHashAndPassword:
 			// incorrect password
-			return c.Render(http.StatusOK, "login", map[string]interface{}{
+			c.Render(http.StatusOK, "login", map[string]interface{}{
 				"Error": "Invalid Username or Password",
 			})
 			if err != nil {
-				c.Echo().Logger().Debug(err)
+				c.Echo().Logger().Debug("Login > bcrypt err",err)
 			}
 			return nil // stop
 		default:
-			c.Echo().Logger().Debug(err)
+			c.Echo().Logger().Debug("Login.default.default[1]",err)
 			return nil // stop
 		}
 		// correct password
@@ -211,7 +211,7 @@ func Login(c *echo.Context) error {
 func Logout(c *echo.Context) error {
 	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		c.Echo().Logger().Debug(err)
+		c.Echo().Logger().Debug("Logout",err)
 	}
 	session.Options.MaxAge = -1
 	if err = session.Save(c.Request(), c.Response()); err != nil {
@@ -223,7 +223,7 @@ func Logout(c *echo.Context) error {
 func Settings(c *echo.Context) error {
 	session, err := redisStore.Get(c.Request(), sessionName)
 	if err != nil {
-		c.Echo().Logger().Debug(err)
+		c.Echo().Logger().Debug("Settings",err)
 	}
 	username, _ := session.Values["username"].(string)
 	if username != c.Param("username") {
@@ -233,7 +233,7 @@ func Settings(c *echo.Context) error {
 	thisuser := user{}
 	go getOneUser(c.Param("username"), &thisuser, errs)
 	if <-errs != nil {
-		c.Echo().Logger().Debug(<-errs)
+		c.Echo().Logger().Debug("getOneUser",<-errs)
 		return nil // stop
 	}
 	c.Request().ParseForm()                 // translate form
@@ -241,13 +241,22 @@ func Settings(c *echo.Context) error {
 	f := c.Request().Form
 	if len(f) > 0 {
 		if len(f["first"]) == 1 {
-			thisuser.setFirstName(f["first"][0])
+			err = thisuser.setFirstName(f["first"][0])
+			if err != nil {
+				c.Echo().Logger().Debug("user.Settings",err)
+			}
 		}
 		if len(f["last"]) == 1 {
-			thisuser.setLastName(f["last"][0])
+			err = thisuser.setLastName(f["last"][0])
+			if err != nil {
+				c.Echo().Logger().Debug("user.Settings",err)
+			}
 		}
 		if len(f["password"]) == 2 && f["password"][0] == f["password"][1] {
-			thisuser.setPassword(f["password"][0])
+			err = thisuser.setPassword(f["password"][0])
+			if err != nil {
+				c.Echo().Logger().Debug("user.Settings",err)
+			}
 		}
 	} else {
 		http.Error(c.Response(), http.StatusText(500), 500)
