@@ -16,6 +16,7 @@ import (
 
 func getRethinkSession(sessionChan chan *r.Session) {
 	var rethinkurl string
+	var rethinkauth string
 	var err error
 	switch {
 	// simple
@@ -30,8 +31,12 @@ func getRethinkSession(sessionChan chan *r.Session) {
 	default:
 		log.Fatal("RETHINK Env Undefined")
 	}
+	if os.Getenv("RETHINK_AUTH") != "" {
+		rethinkauth = os.Getenv("RETHINK_AUTH")
+	}
 	session, err := r.Connect(r.ConnectOpts{
 		Address:  rethinkurl,
+		AuthKey:  rethinkauth,
 		Database: "whatannoysme",
 		MaxIdle:  1,
 		MaxOpen:  10,
