@@ -55,7 +55,7 @@ func getRediStore(redisChan chan *redis.RediStore) {
 	var redisPassword string = ""
 	redisClients, err := strconv.Atoi(os.Getenv("REDIS_CLIENTS"))
 	if err != nil {
-		log.Panic(err)
+		log.Print(err)
 		// assume undefined
 		redisClients = 2
 	}
@@ -64,7 +64,7 @@ func getRediStore(redisChan chan *redis.RediStore) {
 	case os.Getenv("REDIS") != "":
 		redisURL, err := url.Parse(os.Getenv("REDIS"))
 		if err != nil {
-			log.Panic(err)
+			log.Print(err)
 		}
 		if redisURL.User != nil {
 			redisPassword, _ = redisURL.User.Password()
@@ -103,7 +103,7 @@ func getRediStore(redisChan chan *redis.RediStore) {
 func createUser(user interface{}, done chan error) {
 	_, err := r.Table("users").Insert(user).RunWrite(rethinkSession)
 	if err != nil {
-		log.Panic("createUser",err)
+		log.Print("createUser",err)
 	}
 	done <- err
 }
@@ -111,7 +111,7 @@ func createUser(user interface{}, done chan error) {
 func createPeeve(peeve interface{}, done chan error) {
 	_, err := r.Table("peeves").Insert(peeve).RunWrite(rethinkSession)
 	if err != nil {
-		log.Panic("createPeeve",err)
+		log.Print("createPeeve",err)
 	}
 	done <- err
 }
@@ -122,10 +122,12 @@ func getUsers(username string, users interface{}, done chan error) {
 	cursor, err := r.Table("users").Filter(map[string]interface{}{
 		"username": username,
 	}).Run(rethinkSession)
-	defer cursor.Close()
 	if err != nil {
-		log.Panic("getUsers",err)
+		log.Print("getUsers",err)
+		done <- err
+		return // stop
 	}
+	defer cursor.Close()
 	done <- cursor.All(users)
 }
 
@@ -135,10 +137,12 @@ func getPeeves(userId string, peeves interface{}, done chan error) {
 	}).OrderBy(
 		"timestamp",
 	).Run(rethinkSession)
-	defer cursor.Close()
 	if err != nil {
-		log.Panic("getPeeves",err)
+		log.Print("getPeeves",err)
+		done <- err
+		return // stop
 	}
+	defer cursor.Close()
 	done <- cursor.All(peeves)
 }
 
@@ -148,10 +152,12 @@ func getOneUser(username string, user interface{}, done chan error) {
 	cursor, err := r.Table("users").Filter(map[string]interface{}{
 		"username": username,
 	}).Run(rethinkSession)
-	defer cursor.Close()
 	if err != nil {
-		log.Panic("getOneUser",err)
+		log.Print("getOneUser",err)
+		done <- err
+		return
 	}
+	defer cursor.Close()
 	done <- cursor.One(user)
 }
 
@@ -160,10 +166,12 @@ func getOnePeeve(peeveId string, userId string, peeve interface{}, done chan err
 		"id":   peeveId,
 		"user": userId,
 	}).Run(rethinkSession)
-	defer cursor.Close()
 	if err != nil {
-		log.Panic("getOnePeeve",err)
+		log.Print("getOnePeeve", err)
+		done <- err
+		return
 	}
+	defer cursor.Close()
 	done <- cursor.One(peeve)
 }
 
@@ -173,10 +181,12 @@ func getCountUsername(username string, count interface{}, done chan error) {
 	cursor, err := r.DB("whatannoysme").Table("users").Filter(map[string]interface{}{
 		"username": username,
 	}).Count().Run(rethinkSession)
-	defer cursor.Close()
 	if err != nil {
-		log.Panic("getCountUsername",err)
+		log.Print("getCountUsername ",err)
+		done <- err
+		return
 	}
+	defer cursor.Close()
 	done <- cursor.One(count)
 }
 
@@ -187,10 +197,12 @@ func searchUser(search string, users interface{}, done chan error) {
 		Filter(r.Row.Field("username").
 		Match(search)).
 		Run(rethinkSession)
-	defer cursor.Close()
 	if err != nil {
-		log.Panic("searchUser",err)
+		log.Print("searchUser ",err)
+		done <- err
+		return
 	}
+	defer cursor.Close()
 	done <- cursor.All(users)
 }
 
@@ -201,19 +213,23 @@ func searchPeeve(query string, peeves interface{}, done chan error) {
 		EqJoin("user", r.Table("users")).
 		Zip().
 		Run(rethinkSession)
-	defer cursor.Close()
 	if err != nil {
-		log.Panic("searchPeeve",err)
+		log.Print("searchPeeve",err)
+		done <- err
+		return
 	}
+	defer cursor.Close()
 	done <- cursor.All(peeves)
 }
 
 func searchPeeveField(query string, field string, peeves interface{}, done chan error) {
 	cursor, err := r.Table("peeves").Filter(r.Row.Field(field).Match(query)).Run(rethinkSession)
-	defer cursor.Close()
 	if err != nil {
-		log.Panic("searchPeeveField",err)
+		log.Print("searchPeeveField",err)
+		done <- err
+		return
 	}
+	defer cursor.Close()
 	done <- cursor.All(peeves)
 }
 
