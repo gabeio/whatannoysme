@@ -1,16 +1,17 @@
 package main
 
 import (
-	"html/template"
 	"log"
 	"os"
 
-	// echo
-	"github.com/labstack/echo"
-	mw "github.com/labstack/echo/middleware"
+	// gin
+	"github.com/gin-gonic/gin"
+
+	// gzip
+	gzip "github.com/gin-gonic/contrib/gzip"
 
 	// secure
-	secure "gopkg.in/unrolled/secure.v1"
+	secure "github.com/gin-gonic/contrib/secure"
 
 	// rethink
 	rethink "gopkg.in/dancannon/gorethink.v1"
@@ -23,10 +24,6 @@ import (
 )
 
 var (
-	// load & cache all templates
-	temps = &Template{
-		templates: template.Must(template.ParseGlob("templates/*.html")),
-	}
 	// session name
 	sessionName = "wam"
 	// rethink session
@@ -40,24 +37,6 @@ var (
 	// errors
 	err  error
 	errs = make(chan error)
-	// security settings
-	securemw = secure.New(secure.Options{
-		AllowedHosts:       []string{"whatannoys.me", "www.whatannoys.me", "direct.whatannoys.me"},
-		SSLProxyHeaders:    map[string]string{"X-Forwarded-Proto": "https"},
-		FrameDeny:          true,
-		ContentTypeNosniff: true,
-		BrowserXssFilter:   true,
-		ContentSecurityPolicy: "default-src 'self';" +
-			"script-src 'self' 'unsafe-inline' cdnjs.cloudflare.com maxcdn.bootstrapcdn.com;" +
-			"style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com maxcdn.bootstrapcdn.com;" +
-			"img-src 'none';" +
-			"connect-src 'none';" +
-			"font-src maxcdn.bootstrapcdn.com;" +
-			"object-src 'none';" +
-			"media-src 'none';" +
-			"frame-src 'none';" +
-			"",
-	})
 )
 
 func main() {
@@ -93,28 +72,48 @@ func main() {
 	// max session length
 	redisStore.SetMaxAge(7 * 24 * 3600) // 7 days
 
-	// echo setup
-	e := echo.New()
-	// e.Debug()
-	e.Use(securemw.Handler)
-	e.Use(mw.Recover())
-	e.SetRenderer(temps) // connect render(er)
-	e.Post("/too", MeTooPeeve)
-	e.Get("/", IndexTemplate)
-	e.Get("/login", LoginTemplate)
-	e.Post("/login", Login)
-	e.Get("/logout", Logout) // REMOVE THIS!
-	e.Post("/logout", Logout)
-	e.Get("/signup", SignupTemplate)
-	e.Post("/signup", CreateUser)
-	e.Get("/search", Search)
-	e.Post("/search", Search)
-	e.Get("/:username", GetPeeves)
-	e.Post("/:username/create", CreatePeeve)
-	e.Post("/:username/delete", DeletePeeve)
-	e.Get("/:username/settings", SettingsTemplate)
-	e.Post("/:username/settings", Settings)
-	endless.ListenAndServe(getSocket(), e)
+	// router setup
+	r := gin.New()
+	r.Use(gin.Logger())
+	r.Use(gin.Recovery())
+	r.Use(gzip.Gzip(gzip.DefaultCompression))
+	r.Use(secure.Secure(secure.Options{
+		AllowedHosts:       []string{"whatannoys.me", "www.whatannoys.me", "direct.whatannoys.me"},
+		SSLProxyHeaders:    map[string]string{"X-Forwarded-Proto": "https"},
+		FrameDeny:          true,
+		ContentTypeNosniff: true,
+		BrowserXssFilter:   true,
+		ContentSecurityPolicy: "default-src 'self';" +
+			"script-src 'self' 'unsafe-inline' cdnjs.cloudflare.com maxcdn.bootstrapcdn.com;" +
+			"style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com maxcdn.bootstrapcdn.com;" +
+			"img-src 'none';" +
+			"connect-src 'none';" +
+			"font-src maxcdn.bootstrapcdn.com;" +
+			"object-src 'none';" +
+			"media-src 'none';" +
+			"frame-src 'none';" +
+			"",
+	}))
+	r.LoadHTMLGlob("templates/*")
+	r.POST("/too", MeTooPeeve)
+	r.GET("/", IndexTemplate)
+	r.GET("/login", LoginTemplate)
+	r.POST("/login", Login)
+	r.GET("/logout", Logout) // REMOVE THIS!
+	r.POST("/logout", Logout)
+	r.GET("/signup", SignupTemplate)
+	r.POST("/signup", CreateUser)
+	r.GET("/search", Search)
+	r.POST("/search", Search)
+	u := r.Group("/:username")
+	{
+		u.POST("/create", CreatePeeve)
+		u.POST("/delete", DeletePeeve)
+		u.GET("/settings", SettingsTemplate)
+		u.POST("/settings", Settings)
+		u.GET("", GetPeeves)
+	}
+	endless.ListenAndServe(getSocket(), r)
 }
 
 func getSocket() string {
