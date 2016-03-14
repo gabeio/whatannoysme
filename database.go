@@ -103,7 +103,7 @@ func getRediStore(redisChan chan *redis.RediStore) {
 func createUser(user interface{}, done chan error) {
 	_, err := r.Table("users").Insert(user).RunWrite(rethinkSession)
 	if err != nil {
-		log.Print("createUser",err)
+		log.Print("createUser", err)
 	}
 	done <- err
 }
@@ -111,7 +111,7 @@ func createUser(user interface{}, done chan error) {
 func createPeeve(peeve interface{}, done chan error) {
 	_, err := r.Table("peeves").Insert(peeve).RunWrite(rethinkSession)
 	if err != nil {
-		log.Print("createPeeve",err)
+		log.Print("createPeeve", err)
 	}
 	done <- err
 }
@@ -123,7 +123,7 @@ func getUsers(username string, users interface{}, done chan error) {
 		"username": username,
 	}).Run(rethinkSession)
 	if err != nil {
-		log.Print("getUsers",err)
+		log.Print("getUsers", err)
 		done <- err
 		return // stop
 	}
@@ -138,7 +138,7 @@ func getPeeves(userId string, peeves interface{}, done chan error) {
 		"timestamp",
 	).Run(rethinkSession)
 	if err != nil {
-		log.Print("getPeeves",err)
+		log.Print("getPeeves", err)
 		done <- err
 		return // stop
 	}
@@ -153,7 +153,7 @@ func getOneUser(username string, user interface{}, done chan error) {
 		"username": username,
 	}).Run(rethinkSession)
 	if err != nil {
-		log.Print("getOneUser",err)
+		log.Print("getOneUser", err)
 		done <- err
 		return
 	}
@@ -182,7 +182,7 @@ func getCountUsername(username string, count interface{}, done chan error) {
 		"username": username,
 	}).Count().Run(rethinkSession)
 	if err != nil {
-		log.Print("getCountUsername ",err)
+		log.Print("getCountUsername ", err)
 		done <- err
 		return
 	}
@@ -198,7 +198,7 @@ func searchUser(search string, users interface{}, done chan error) {
 		Match(search)).
 		Run(rethinkSession)
 	if err != nil {
-		log.Print("searchUser ",err)
+		log.Print("searchUser ", err)
 		done <- err
 		return
 	}
@@ -214,7 +214,7 @@ func searchPeeve(query string, peeves interface{}, done chan error) {
 		Zip().
 		Run(rethinkSession)
 	if err != nil {
-		log.Print("searchPeeve",err)
+		log.Print("searchPeeve", err)
 		done <- err
 		return
 	}
@@ -225,7 +225,7 @@ func searchPeeve(query string, peeves interface{}, done chan error) {
 func searchPeeveField(query string, field string, peeves interface{}, done chan error) {
 	cursor, err := r.Table("peeves").Filter(r.Row.Field(field).Match(query)).Run(rethinkSession)
 	if err != nil {
-		log.Print("searchPeeveField",err)
+		log.Print("searchPeeveField", err)
 		done <- err
 		return
 	}

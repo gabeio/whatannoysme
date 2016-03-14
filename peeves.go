@@ -17,10 +17,13 @@ func GetPeeves(c *gin.Context) {
 	if err != nil {
 		log.Print(err)
 	}
+	errs := make(chan error)
+	defer close(errs)
 	username, _ := session.Values["username"].(string) // convert to string
 	thisUser := user{}
 	go getOneUser(c.Param("username"), &thisUser, errs)
-	switch <-errs {
+	err = <-errs
+	switch err {
 	case nil:
 		break
 	case gorethink.ErrEmptyResult:
@@ -31,18 +34,19 @@ func GetPeeves(c *gin.Context) {
 			"Session":         session,  // this might be blank
 		})
 	default:
-		log.Print(<-errs)
+		log.Print(err)
 		return // stop
 	}
 	peeves := []peeve{}
 	go getPeeves(thisUser.Id, &peeves, errs)
-	switch <-errs {
+	err = <-errs
+	switch err {
 	case nil:
 		break
 	case gorethink.ErrEmptyResult:
 		break // none is okay
 	default:
-		log.Print(<-errs)
+		log.Print(err)
 		return // stop
 	}
 	c.HTML(http.StatusOK, "user", map[string]interface{}{
@@ -58,6 +62,8 @@ func CreatePeeve(c *gin.Context) {
 	if err != nil {
 		log.Print(err)
 	}
+	errs := make(chan error)
+	defer close(errs)
 	username, _ := session.Values["username"].(string) // convert to string
 	if username != c.Param("username") {               // if user logged isn't this user
 		c.Redirect(302, "/"+c.Param("username"))
@@ -83,7 +89,8 @@ func CreatePeeve(c *gin.Context) {
 	default:
 		user := user{}
 		go getOneUser(c.Param("username"), &user, errs)
-		switch <-errs {
+		err = <-errs
+		switch err {
 		case nil:
 			break
 		case gorethink.ErrEmptyResult:
@@ -95,7 +102,7 @@ func CreatePeeve(c *gin.Context) {
 			})
 		default:
 			http.Error(c.Writer, http.StatusText(500), 500)
-			log.Print(<-errs)
+			log.Print(err)
 			return // stop
 		}
 		go createPeeve(&peeve{
@@ -106,8 +113,8 @@ func CreatePeeve(c *gin.Context) {
 			Body:      f["body"][0],
 			Timestamp: time.Now(),
 		}, errs)
-		if <-errs != nil {
-			log.Print(<-errs)
+		if err = <-errs; err != nil {
+			log.Print(err)
 		}
 		c.Redirect(302, "/"+c.Param("username"))
 		return
@@ -120,6 +127,8 @@ func DeletePeeve(c *gin.Context) {
 	if err != nil {
 		log.Print(err)
 	}
+	errs := make(chan error)
+	defer close(errs)
 	username, _ := session.Values["username"].(string) // convert to string
 	if username != c.Param("username") {               // if user logged isn't this user
 		c.Redirect(302, "/"+c.Param("username"))
@@ -142,7 +151,8 @@ func DeletePeeve(c *gin.Context) {
 	default:
 		user := user{}
 		go getOneUser(username, &user, errs)
-		switch <-errs {
+		err = <-errs
+		switch err {
 		case nil:
 			break
 		case gorethink.ErrEmptyResult:
@@ -154,12 +164,12 @@ func DeletePeeve(c *gin.Context) {
 			})
 		default:
 			http.Error(c.Writer, http.StatusText(500), 500)
-			log.Print(<-errs)
+			log.Print(err)
 			return // stop
 		}
 		go dropOnePeeve(f["id"][0], user.Id, errs)
-		if <-errs != nil {
-			log.Print(<-errs)
+		if err = <-errs; err != nil {
+			log.Print(err)
 			return // stop
 		}
 		c.Redirect(302, "/"+c.Param("username"))
@@ -173,6 +183,8 @@ func MeTooPeeve(c *gin.Context) {
 	if err != nil {
 		log.Print(err)
 	}
+	errs := make(chan error)
+	defer close(errs)
 	username, _ := session.Values["username"].(string) // convert to string
 	if username == c.Param("username") {
 		// don't allow a user to metoo their own peeve
@@ -201,7 +213,8 @@ func MeTooPeeve(c *gin.Context) {
 	default:
 		user := user{}
 		go getOneUser(username, &user, errs)
-		switch <-errs {
+		err = <-errs
+		switch err {
 		case nil:
 			break
 		case gorethink.ErrEmptyResult:
@@ -213,13 +226,14 @@ func MeTooPeeve(c *gin.Context) {
 			})
 		default:
 			http.Error(c.Writer, http.StatusText(500), 500)
-			log.Print(<-errs)
+			log.Print(err)
 			return // stop
 		}
 		metoopeeve := peeve{}
 		// don't assume input is valid
 		go getOnePeeve(f["id"][0], f["user"][0], &metoopeeve, errs)
-		switch <-errs {
+		err = <-errs
+		switch err {
 		case nil:
 			break
 		case gorethink.ErrEmptyResult:
@@ -231,7 +245,7 @@ func MeTooPeeve(c *gin.Context) {
 			})
 		default:
 			http.Error(c.Writer, http.StatusText(500), 500)
-			log.Print(<-errs)
+			log.Print(err)
 			return // stop
 		}
 		peevey := &peeve{
@@ -243,8 +257,8 @@ func MeTooPeeve(c *gin.Context) {
 			Timestamp: time.Now(),        // when I reposted it
 		}
 		go createPeeve(peevey, errs)
-		if <-errs != nil {
-			log.Print(<-errs)
+		if err = <-errs; err != nil {
+			log.Print(err)
 		}
 		c.Redirect(302, "/"+c.Param("username"))
 		return

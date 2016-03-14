@@ -35,19 +35,13 @@ var (
 	// present working directory
 	pwd string
 	// errors
-	err  error
-	errs = make(chan error)
+	// err  error
+	// errs := make(chan error)
 )
 
 func main() {
 	// check all necessary Environmental variables are present
 	checkEnvs()
-
-	// get and save the present working directory
-	pwd, err = os.Getwd()
-	if err != nil {
-		log.Panic(err)
-	}
 
 	// start rethink db connect
 	rethinkChannel := make(chan *rethink.Session)

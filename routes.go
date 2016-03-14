@@ -88,23 +88,27 @@ func Search(c *gin.Context) {
 		}
 	case f["q"] != nil, len(f["q"]) == 1:
 		users := []user{} // many users can be returned
+		errs := make(chan error)
+		defer close(errs)
 		go searchUser(f["q"][0], &users, errs)
-		switch <-errs {
+		err = <-errs
+		switch err {
 		case nil:
 			break // nil is good
 		default:
 			http.Error(c.Writer, http.StatusText(500), 500)
-			log.Print(<-errs)
+			log.Print(err)
 			return // stop
 		}
 		peeves := []peeveAndUser{} // many peeves can be returned
 		go searchPeeve(f["q"][0], &peeves, errs)
-		switch <-errs {
+		err = <-errs
+		switch err {
 		case nil:
 			break // nil is good
 		default:
 			http.Error(c.Writer, http.StatusText(500), 500)
-			log.Print(<-errs)
+			log.Print(err)
 			return // stop
 		}
 		c.HTML(http.StatusOK, "search", map[string]interface{}{

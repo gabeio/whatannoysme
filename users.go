@@ -21,6 +21,8 @@ func CreateUser(c *gin.Context) {
 	if err != nil {
 		log.Print(err)
 	}
+	errs := make(chan error)
+	defer close(errs)
 	username, _ := session.Values["username"].(string)
 	if username != "" {
 		c.Redirect(302, "/"+username)
@@ -72,8 +74,8 @@ func CreateUser(c *gin.Context) {
 	f["username"][0] = strings.ToLower(f["username"][0])
 	var i int
 	go getCountUsername(f["username"][0], &i, errs)
-	if <-errs != nil {
-		log.Print(<-errs)
+	if err = <-errs; err != nil {
+		log.Print(err)
 	}
 	if i > 1 {
 		c.HTML(http.StatusOK, "signup", map[string]interface{}{
@@ -95,9 +97,9 @@ func CreateUser(c *gin.Context) {
 		Joined:   time.Now(),
 	}
 	go createUser(newuser, errs)
-	if <-errs != nil {
+	if err = <-errs; err != nil {
 		http.Error(c.Writer, http.StatusText(500), 500)
-		log.Print(<-errs)
+		log.Print(err)
 		return // stop
 	}
 	// session.Values["user"] = user
@@ -114,6 +116,8 @@ func Login(c *gin.Context) {
 	if err != nil {
 		log.Print("Login.session",err)
 	}
+	errs := make(chan error)
+	defer close(errs)
 	username, _ := session.Values["username"].(string)
 	if username != "" {
 		c.Redirect(302, "/"+username)
@@ -136,7 +140,8 @@ func Login(c *gin.Context) {
 		f["username"][0] = strings.ToLower(f["username"][0]) // assure one user per username
 		user := user{}
 		go getOneUser(f["username"][0], &user, errs)
-		switch <-errs {
+		err = <-errs
+		switch err {
 		case nil:
 			break
 		case gorethink.ErrEmptyResult:
@@ -145,7 +150,7 @@ func Login(c *gin.Context) {
 			})
 			return // stop
 		default:
-			log.Print("Login.default>default[0]",<-errs)
+			log.Print("Login.default>default[0]", err)
 			return // stop
 		}
 		// user found
@@ -193,6 +198,8 @@ func Settings(c *gin.Context) {
 	if err != nil {
 		log.Print("Settings",err)
 	}
+	errs := make(chan error)
+	defer close(errs)
 	username, _ := session.Values["username"].(string)
 	if username != c.Param("username") {
 		// user is not this user
@@ -200,8 +207,8 @@ func Settings(c *gin.Context) {
 	}
 	thisuser := user{}
 	go getOneUser(c.Param("username"), &thisuser, errs)
-	if <-errs != nil {
-		log.Print("getOneUser",<-errs)
+	if err = <-errs; err != nil {
+		log.Print("getOneUser",err)
 		return // stop
 	}
 	c.Request.ParseForm()                 // translate form
