@@ -56,7 +56,7 @@ func SettingsTemplate(c *gin.Context) {
 	}
 	if username != c.Param("username") {
 		// user is not this user
-		c.Redirect(302, "/"+username+"/settings")
+		c.Redirect(302, "/u/"+username+"/settings")
 	}
 	c.HTML(http.StatusOK, "settings", map[string]interface{}{
 		"SessionUsername": username,

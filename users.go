@@ -108,7 +108,7 @@ func CreateUser(c *gin.Context) {
 	if err = session.Save(c.Request, c.Writer); err != nil {
 		log.Print("Error saving session: %v", err)
 	}
-	c.Redirect(302, "/"+f["username"][0])
+	c.Redirect(302, "/u/"+f["username"][0])
 }
 
 func Login(c *gin.Context) {
@@ -203,7 +203,7 @@ func Settings(c *gin.Context) {
 	username, _ := session.Values["username"].(string)
 	if username != c.Param("username") {
 		// user is not this user
-		c.Redirect(302, "/"+c.Param("username")+"/settings")
+		c.Redirect(302, "/u/"+c.Param("username")+"/settings")
 	}
 	thisuser := user{}
 	go getOneUser(c.Param("username"), &thisuser, errs)
@@ -237,5 +237,5 @@ func Settings(c *gin.Context) {
 		http.Error(c.Writer, http.StatusText(500), 500)
 		return // stop
 	}
-	c.Redirect(302, "/"+c.Param("username")+"/settings")
+	c.Redirect(302, "/u/"+c.Param("username")+"/settings")
 }
