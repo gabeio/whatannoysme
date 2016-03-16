@@ -15,7 +15,7 @@ func IndexTemplate(c *gin.Context) {
 	}
 	username, _ := session.Values["username"].(string)
 	if username != "" {
-		c.Redirect(302, "/"+username) // redirect to their page
+		c.Redirect(302, "/u/"+username) // redirect to their page
 	}
 	c.HTML(http.StatusOK, "index", nil) // only serve index.html
 }
@@ -27,7 +27,7 @@ func SignupTemplate(c *gin.Context) {
 	}
 	username, _ := session.Values["username"].(string)
 	if username != "" {
-		c.Redirect(302, "/"+username)
+		c.Redirect(302, "/u/"+username)
 	}
 	c.HTML(http.StatusOK, "signup", nil)
 }
@@ -39,7 +39,7 @@ func LoginTemplate(c *gin.Context) {
 	}
 	username, _ := session.Values["username"].(string)
 	if username != "" {
-		c.Redirect(302, "/"+username)
+		c.Redirect(302, "/u/"+username)
 	}
 	c.HTML(http.StatusOK, "login", nil)
 }
@@ -70,8 +70,8 @@ func Search(c *gin.Context) {
 		log.Print(err)
 	}
 	username, _ = session.Values["username"].(string) // convert to string
-	c.Request.ParseForm()                           // translate form
-	c.Request.ParseMultipartForm(1000000)           // translate multipart 1Mb limit
+	c.Request.ParseForm()                             // translate form
+	c.Request.ParseMultipartForm(1000000)             // translate multipart 1Mb limit
 	f := c.Request.Form
 	switch {
 	case f["q"] == nil, len(f["q"]) != 1:

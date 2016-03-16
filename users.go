@@ -25,7 +25,7 @@ func CreateUser(c *gin.Context) {
 	defer close(errs)
 	username, _ := session.Values["username"].(string)
 	if username != "" {
-		c.Redirect(302, "/"+username)
+		c.Redirect(302, "/u/"+username)
 	}
 	c.Request.ParseForm()                 // translate form
 	c.Request.ParseMultipartForm(1000000) // translate multipart 1Mb limit
@@ -114,13 +114,13 @@ func CreateUser(c *gin.Context) {
 func Login(c *gin.Context) {
 	session, err := redisStore.Get(c.Request, sessionName)
 	if err != nil {
-		log.Print("Login.session",err)
+		log.Print("Login.session", err)
 	}
 	errs := make(chan error)
 	defer close(errs)
 	username, _ := session.Values["username"].(string)
 	if username != "" {
-		c.Redirect(302, "/"+username)
+		c.Redirect(302, "/u/"+username)
 	}
 	c.Request.ParseForm()                 // translate form
 	c.Request.ParseMultipartForm(1000000) // translate multipart 1Mb limit
@@ -166,7 +166,7 @@ func Login(c *gin.Context) {
 			})
 			return // stop
 		default:
-			log.Print("Login.default.default[1]",err)
+			log.Print("Login.default.default[1]", err)
 			return // stop
 		}
 		// correct password
@@ -176,7 +176,7 @@ func Login(c *gin.Context) {
 		if err = session.Save(c.Request, c.Writer); err != nil {
 			log.Print("Error saving session: %v", err)
 		}
-		c.Redirect(302, "/"+f["username"][0])
+		c.Redirect(302, "/u/"+f["username"][0])
 	}
 	return // stop
 }
@@ -184,7 +184,7 @@ func Login(c *gin.Context) {
 func Logout(c *gin.Context) {
 	session, err := redisStore.Get(c.Request, sessionName)
 	if err != nil {
-		log.Print("Logout",err)
+		log.Print("Logout", err)
 	}
 	session.Options.MaxAge = -1
 	if err = session.Save(c.Request, c.Writer); err != nil {
@@ -196,7 +196,7 @@ func Logout(c *gin.Context) {
 func Settings(c *gin.Context) {
 	session, err := redisStore.Get(c.Request, sessionName)
 	if err != nil {
-		log.Print("Settings",err)
+		log.Print("Settings", err)
 	}
 	errs := make(chan error)
 	defer close(errs)
@@ -208,7 +208,7 @@ func Settings(c *gin.Context) {
 	thisuser := user{}
 	go getOneUser(c.Param("username"), &thisuser, errs)
 	if err = <-errs; err != nil {
-		log.Print("getOneUser",err)
+		log.Print("getOneUser", err)
 		return // stop
 	}
 	c.Request.ParseForm()                 // translate form
@@ -218,19 +218,19 @@ func Settings(c *gin.Context) {
 		if len(f["first"]) == 1 {
 			err = thisuser.setFirstName(f["first"][0])
 			if err != nil {
-				log.Print("user.Settings",err)
+				log.Print("user.Settings", err)
 			}
 		}
 		if len(f["last"]) == 1 {
 			err = thisuser.setLastName(f["last"][0])
 			if err != nil {
-				log.Print("user.Settings",err)
+				log.Print("user.Settings", err)
 			}
 		}
 		if len(f["password"]) == 2 && f["password"][0] == f["password"][1] {
 			err = thisuser.setPassword(f["password"][0])
 			if err != nil {
-				log.Print("user.Settings",err)
+				log.Print("user.Settings", err)
 			}
 		}
 	} else {

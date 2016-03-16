@@ -195,7 +195,7 @@ func getCountUsername(username string, count interface{}, done chan error) {
 func searchUser(search string, users interface{}, done chan error) {
 	cursor, err := r.Table("users").
 		Filter(r.Row.Field("username").
-		Match(search)).
+			Match(search)).
 		Run(rethinkSession)
 	if err != nil {
 		log.Print("searchUser ", err)

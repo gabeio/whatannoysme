@@ -25,7 +25,7 @@
 					<ul class="list-group">
 	{{ range .Users }}
 		{{ with . }}
-						<a href="{{ .Username }}" class="list-group-item">{{ .Username }}</a><!-- don't show buttons for outside user -->
+						<a href="/u/{{ .Username }}" class="list-group-item">{{ .Username }}</a><!-- don't show buttons for outside user -->
 		{{ end }}
 	{{ end }}
 					</ul>
@@ -43,7 +43,7 @@
 					<ul class="list-group">
 	{{ range .Peeves }}
 		{{ with . }}
-						<a href="/{{ .Username }}" class="list-group-item">{{ .Body }}</a>
+						<a href="/u/{{ .Username }}" class="list-group-item">{{ .Body }}</a>
 		{{ end }}
 	{{ end }}
 					</ul>

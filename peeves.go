@@ -66,7 +66,7 @@ func CreatePeeve(c *gin.Context) {
 	defer close(errs)
 	username, _ := session.Values["username"].(string) // convert to string
 	if username != c.Param("username") {               // if user logged isn't this user
-		c.Redirect(302, "/"+c.Param("username"))
+		c.Redirect(302, "/u/"+c.Param("username"))
 		return
 	}
 	c.Request.ParseForm()                 // translate form
@@ -116,7 +116,7 @@ func CreatePeeve(c *gin.Context) {
 		if err = <-errs; err != nil {
 			log.Print(err)
 		}
-		c.Redirect(302, "/"+c.Param("username"))
+		c.Redirect(302, "/u/"+c.Param("username"))
 		return
 	}
 	return
@@ -131,7 +131,7 @@ func DeletePeeve(c *gin.Context) {
 	defer close(errs)
 	username, _ := session.Values["username"].(string) // convert to string
 	if username != c.Param("username") {               // if user logged isn't this user
-		c.Redirect(302, "/"+c.Param("username"))
+		c.Redirect(302, "/u/"+c.Param("username"))
 		return
 	}
 	c.Request.ParseForm()                 // translate form
@@ -172,7 +172,7 @@ func DeletePeeve(c *gin.Context) {
 			log.Print(err)
 			return // stop
 		}
-		c.Redirect(302, "/"+c.Param("username"))
+		c.Redirect(302, "/u/"+c.Param("username"))
 		return
 	}
 	return
@@ -188,7 +188,7 @@ func MeTooPeeve(c *gin.Context) {
 	username, _ := session.Values["username"].(string) // convert to string
 	if username == c.Param("username") {
 		// don't allow a user to metoo their own peeve
-		c.Redirect(302, "/"+c.Param("username"))
+		c.Redirect(302, "/u/"+c.Param("username"))
 		return
 	}
 	c.Request.ParseForm()                 // translate form
@@ -260,7 +260,7 @@ func MeTooPeeve(c *gin.Context) {
 		if err = <-errs; err != nil {
 			log.Print(err)
 		}
-		c.Redirect(302, "/"+c.Param("username"))
+		c.Redirect(302, "/u/"+c.Param("username"))
 		return
 	}
 	return

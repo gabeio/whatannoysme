@@ -89,8 +89,8 @@ func main() {
 			"",
 	}))
 	r.LoadHTMLGlob("templates/*")
-	r.POST("/too", MeTooPeeve)
 	r.GET("/", IndexTemplate)
+	r.POST("/too", MeTooPeeve)
 	r.GET("/login", LoginTemplate)
 	r.POST("/login", Login)
 	r.GET("/logout", Logout) // REMOVE THIS!
@@ -99,7 +99,7 @@ func main() {
 	r.POST("/signup", CreateUser)
 	r.GET("/search", Search)
 	r.POST("/search", Search)
-	u := r.Group("/:username")
+	u := r.Group("/u/:username")
 	{
 		u.POST("/create", CreatePeeve)
 		u.POST("/delete", DeletePeeve)
