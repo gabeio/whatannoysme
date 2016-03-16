@@ -201,12 +201,8 @@ func Settings(c *gin.Context) {
 	errs := make(chan error)
 	defer close(errs)
 	username, _ := session.Values["username"].(string)
-	if username != c.Param("username") {
-		// user is not this user
-		c.Redirect(302, "/u/"+c.Param("username")+"/settings")
-	}
 	thisuser := user{}
-	go getOneUser(c.Param("username"), &thisuser, errs)
+	go getOneUser(username, &thisuser, errs)
 	if err = <-errs; err != nil {
 		log.Print("getOneUser", err)
 		return // stop
@@ -237,5 +233,5 @@ func Settings(c *gin.Context) {
 		http.Error(c.Writer, http.StatusText(500), 500)
 		return // stop
 	}
-	c.Redirect(302, "/u/"+c.Param("username")+"/settings")
+	c.Redirect(302, "/settings")
 }

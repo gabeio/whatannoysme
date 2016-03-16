@@ -188,7 +188,7 @@ func MeTooPeeve(c *gin.Context) {
 	username, _ := session.Values["username"].(string) // convert to string
 	if username == c.Param("username") {
 		// don't allow a user to metoo their own peeve
-		c.Redirect(302, "/u/"+c.Param("username"))
+		c.Redirect(302, "/")
 		return
 	}
 	c.Request.ParseForm()                 // translate form
@@ -260,7 +260,7 @@ func MeTooPeeve(c *gin.Context) {
 		if err = <-errs; err != nil {
 			log.Print(err)
 		}
-		c.Redirect(302, "/u/"+c.Param("username"))
+		c.Redirect(302, "/")
 		return
 	}
 	return

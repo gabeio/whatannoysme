@@ -99,12 +99,12 @@ func main() {
 	r.POST("/signup", CreateUser)
 	r.GET("/search", Search)
 	r.POST("/search", Search)
+	r.GET("/settings", SettingsTemplate)
+	r.POST("/settings", Settings)
 	u := r.Group("/u/:username")
 	{
 		u.POST("/create", CreatePeeve)
 		u.POST("/delete", DeletePeeve)
-		u.GET("/settings", SettingsTemplate)
-		u.POST("/settings", Settings)
 		u.GET("", GetPeeves)
 	}
 	endless.ListenAndServe(getSocket(), r)
