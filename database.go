@@ -186,7 +186,7 @@ func getOnePeeve(peeveId string, userId string, peeve interface{}, done chan err
 // get count
 
 func getCountUsername(username string, count interface{}, done chan error) {
-	cursor, err := r.DB("whatannoysme").Table("users").Filter(map[string]interface{}{
+	cursor, err := r.Table("users").Filter(map[string]interface{}{
 		"username": username,
 	}).Count().Run(rethinkSession)
 	if err != nil {
