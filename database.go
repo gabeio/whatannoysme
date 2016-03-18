@@ -15,13 +15,19 @@ import (
 )
 
 func getRethinkSession(sessionChan chan *r.Session) {
-	var rethinkurl string
+	var rethinkurl []string
 	var rethinkauth string
 	var err error
 	switch {
 	// simple
 	case os.Getenv("RETHINK") != "":
-		rethinkurl = os.Getenv("RETHINK")
+		rethinkurl = []string{os.Getenv("RETHINK")}
+		if len(strings.Split(rethinkurl[0], ";")) > 1 {
+			rethinkurl = strings.Split(rethinkurl[0], ";")
+		}
+		if len(strings.Split(rethinkurl[0], ",")) > 1 {
+			rethinkurl = strings.Split(rethinkurl[0], ",")
+		}
 	// docker
 	case os.Getenv("RETHINK_PORT_28015_TCP_ADDR") != "" &&
 		os.Getenv("RETHINK_PORT_28015_TCP_PORT") != "":
@@ -31,18 +37,23 @@ func getRethinkSession(sessionChan chan *r.Session) {
 	default:
 		log.Fatal("RETHINK Env Undefined")
 	}
+	if os.Getenv("RETHINK_DB") != "" {
+		rethinkdb = os.Getenv("RETHINK_DB")
+	} else {
+		rethinkdb = "whatannoysme"
+	}
 	if os.Getenv("RETHINK_AUTH") != "" {
 		rethinkauth = os.Getenv("RETHINK_AUTH")
 	}
 	session, err := r.Connect(r.ConnectOpts{
 		Address:  rethinkurl,
 		AuthKey:  rethinkauth,
-		Database: "whatannoysme",
+		Database: rethinkdb,
 		MaxIdle:  1,
 		MaxOpen:  10,
 		// DiscoverHosts: true,
 	})
-	session.Use(os.Getenv("RETHINK_DB"))
+	session.Use(rethinkdb)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -50,7 +61,6 @@ func getRethinkSession(sessionChan chan *r.Session) {
 }
 
 func getRediStore(redisChan chan *redis.RediStore) {
-	// var redisStore *redistore.RediStore = new(redistore.RediStore)
 	var redisHostPort string = ":6379"
 	var redisPassword string = ""
 	redisClients, err := strconv.Atoi(os.Getenv("REDIS_CLIENTS"))
@@ -58,6 +68,10 @@ func getRediStore(redisChan chan *redis.RediStore) {
 		log.Print(err)
 		// assume undefined
 		redisClients = 2
+	}
+	// auth?
+	if os.Getenv("REDIS_PASS") != "" {
+		redisPassword = os.Getenv("REDIS_PASS")
 	}
 	switch {
 	// simple
@@ -74,14 +88,7 @@ func getRediStore(redisChan chan *redis.RediStore) {
 			// if the host can't be split by : then append default redis port
 			redisHostPort += ":6379"
 		}
-	// docker with auth
-	case os.Getenv("REDIS_PASS") != "" &&
-		os.Getenv("REDIS_PORT_6379_TCP_ADDR") != "" &&
-		os.Getenv("REDIS_PORT_6379_TCP_PORT") != "":
-		redisHostPort = os.Getenv("REDIS_PORT_6379_TCP_ADDR") + ":" +
-			os.Getenv("REDIS_PORT_6379_TCP_PORT")
-		redisPassword = os.Getenv("REDIS_PASS")
-	// docker without auth
+	// docker
 	case os.Getenv("REDIS_PORT_6379_TCP_ADDR") != "" &&
 		os.Getenv("REDIS_PORT_6379_TCP_PORT") != "":
 		redisHostPort = os.Getenv("REDIS_PORT_6379_TCP_ADDR") + ":" +
@@ -194,8 +201,7 @@ func getCountUsername(username string, count interface{}, done chan error) {
 
 func searchUser(search string, users interface{}, done chan error) {
 	cursor, err := r.Table("users").
-		Filter(r.Row.Field("username").
-			Match(search)).
+		Filter(r.Row.Field("username").Match(search)).
 		Run(rethinkSession)
 	if err != nil {
 		log.Print("searchUser ", err)
@@ -223,7 +229,9 @@ func searchPeeve(query string, peeves interface{}, done chan error) {
 }
 
 func searchPeeveField(query string, field string, peeves interface{}, done chan error) {
-	cursor, err := r.Table("peeves").Filter(r.Row.Field(field).Match(query)).Run(rethinkSession)
+	cursor, err := r.Table("peeves").
+		Filter(r.Row.Field(field).Match(query)).
+		Run(rethinkSession)
 	if err != nil {
 		log.Print("searchPeeveField", err)
 		done <- err
@@ -233,18 +241,20 @@ func searchPeeveField(query string, field string, peeves interface{}, done chan 
 	done <- cursor.All(peeves)
 }
 
-// drop one
+// drop ones
 
 func dropOneUser(userId string, done chan error) {
 	log.Fatal("dont run this")
-	_, err := r.Table("users").Get(userId).Delete().RunWrite(rethinkSession)
+	_, err := r.Table("users").Get(userId).Limit(1).Delete().RunWrite(rethinkSession)
 	done <- err
 }
 
 func dropOnePeeve(peeveId string, userId string, done chan error) {
-	_, err := r.Table("peeves").Filter(map[string]interface{}{
-		"id":   peeveId,
-		"user": userId,
-	}).Limit(1).Delete().RunWrite(rethinkSession)
+	_, err := r.Table("peeves").
+		Filter(map[string]interface{}{
+			"id":   peeveId,
+			"user": userId,
+		}).Limit(1).Delete().
+		RunWrite(rethinkSession)
 	done <- err
 }
