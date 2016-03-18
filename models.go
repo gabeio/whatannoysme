@@ -78,28 +78,6 @@ func (u *user) FullName() string {
 	return u.FirstName + " " + u.LastName
 }
 
-// func (p *peeve) User() (user) {
-// 	user := user{}
-// 	cursor, err := r.Table("users").Get(p.UserId).Run(rethinkSession)
-// 	defer cursor.Close()
-// 	cursor.One(user)
-// 	if err != nil {
-// 		log.Panic(err)
-// 	}
-// 	return user
-// }
-//
-// func (p *peeve) Username() (string) {
-// 	user := user{}
-// 	cursor, err := r.Table("users").Get(p.UserId).Run(rethinkSession)
-// 	defer cursor.Close()
-// 	cursor.One(user)
-// 	if err != nil {
-// 		log.Panic(err)
-// 	}
-// 	return user.Username
-// }
-
 func bcryptHash(password string) (hash string) {
 	bytehash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptStrength)
 	if err != nil {

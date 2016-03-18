@@ -17,6 +17,7 @@ import (
 func getRethinkSession(sessionChan chan *r.Session) {
 	var rethinkurl []string
 	var rethinkauth string
+	var rethinkdb string
 	var err error
 	switch {
 	// simple
@@ -31,8 +32,8 @@ func getRethinkSession(sessionChan chan *r.Session) {
 	// docker
 	case os.Getenv("RETHINK_PORT_28015_TCP_ADDR") != "" &&
 		os.Getenv("RETHINK_PORT_28015_TCP_PORT") != "":
-		rethinkurl = os.Getenv("RETHINK_PORT_28015_TCP_ADDR") + ":" +
-			os.Getenv("RETHINK_PORT_28015_TCP_PORT")
+		rethinkurl = []string{os.Getenv("RETHINK_PORT_28015_TCP_ADDR") + ":" +
+			os.Getenv("RETHINK_PORT_28015_TCP_PORT")}
 	// default fail
 	default:
 		log.Fatal("RETHINK Env Undefined")
@@ -46,12 +47,12 @@ func getRethinkSession(sessionChan chan *r.Session) {
 		rethinkauth = os.Getenv("RETHINK_AUTH")
 	}
 	session, err := r.Connect(r.ConnectOpts{
-		Address:  rethinkurl,
-		AuthKey:  rethinkauth,
-		Database: rethinkdb,
-		MaxIdle:  1,
-		MaxOpen:  10,
-		// DiscoverHosts: true,
+		Addresses:     rethinkurl,
+		AuthKey:       rethinkauth,
+		Database:      rethinkdb,
+		MaxIdle:       10,
+		MaxOpen:       40,
+		DiscoverHosts: true,
 	})
 	session.Use(rethinkdb)
 	if err != nil {
