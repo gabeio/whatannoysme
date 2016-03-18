@@ -127,8 +127,8 @@ func createPeeve(peeve interface{}, done chan error) {
 // get
 
 func getUsers(username string, users interface{}, done chan error) {
-	cursor, err := r.Table("users").Filter(map[string]interface{}{
-		"username": username,
+	cursor, err := r.Table("users").Filter(userModel{
+		Username: username,
 	}).Run(rethinkSession)
 	if err != nil {
 		log.Print("getUsers", err)
@@ -140,8 +140,8 @@ func getUsers(username string, users interface{}, done chan error) {
 }
 
 func getPeeves(userId string, peeves interface{}, done chan error) {
-	cursor, err := r.Table("peeves").Filter(map[string]interface{}{
-		"user": userId,
+	cursor, err := r.Table("peeves").Filter(peeveModel{
+		UserId: userId,
 	}).OrderBy(
 		"timestamp",
 	).Run(rethinkSession)
@@ -157,8 +157,8 @@ func getPeeves(userId string, peeves interface{}, done chan error) {
 // get one
 
 func getOneUser(username string, user interface{}, done chan error) {
-	cursor, err := r.Table("users").Filter(map[string]interface{}{
-		"username": username,
+	cursor, err := r.Table("users").Filter(userModel{
+		Username: username,
 	}).Run(rethinkSession)
 	if err != nil {
 		log.Print("getOneUser", err)
@@ -170,9 +170,9 @@ func getOneUser(username string, user interface{}, done chan error) {
 }
 
 func getOnePeeve(peeveId string, userId string, peeve interface{}, done chan error) {
-	cursor, err := r.Table("peeves").Filter(map[string]interface{}{
-		"id":   peeveId,
-		"user": userId,
+	cursor, err := r.Table("peeves").Filter(peeveModel{
+		Id:     peeveId,
+		UserId: userId,
 	}).Run(rethinkSession)
 	if err != nil {
 		log.Print("getOnePeeve", err)
@@ -186,8 +186,8 @@ func getOnePeeve(peeveId string, userId string, peeve interface{}, done chan err
 // get count
 
 func getCountUsername(username string, count interface{}, done chan error) {
-	cursor, err := r.Table("users").Filter(map[string]interface{}{
-		"username": username,
+	cursor, err := r.Table("users").Filter(userModel{
+		Username: username,
 	}).Count().Run(rethinkSession)
 	if err != nil {
 		log.Print("getCountUsername ", err)
@@ -252,9 +252,9 @@ func dropOneUser(userId string, done chan error) {
 
 func dropOnePeeve(peeveId string, userId string, done chan error) {
 	_, err := r.Table("peeves").
-		Filter(map[string]interface{}{
-			"id":   peeveId,
-			"user": userId,
+		Filter(peeveModel{
+			Id:     peeveId,
+			UserId: userId,
 		}).Limit(1).Delete().
 		RunWrite(rethinkSession)
 	done <- err

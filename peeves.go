@@ -20,25 +20,31 @@ func GetPeeves(c *gin.Context) {
 	errs := make(chan error)
 	defer close(errs)
 	username, _ := session.Values["username"].(string) // convert to string
-	thisUser := user{}
+	thisUser := userModel{}
 	go getOneUser(c.Param("username"), &thisUser, errs)
 	err = <-errs
 	switch err {
 	case nil:
 		break
 	case gorethink.ErrEmptyResult:
-		c.HTML(http.StatusNotFound, "error", map[string]interface{}{
-			"Number":          "404",
-			"Body":            "Not Found",
-			"SessionUsername": username, // this might be blank
-			"Session":         session,  // this might be blank
+		log.Print("ErrEmptyResult")
+		c.HTML(http.StatusNotFound, "error", struct {
+			Number          int
+			Body            string
+			SessionUsername string
+			Session         interface{}
+		}{
+			404,
+			"Not Found",
+			username, // this might be blank
+			session,  // this might be blank
 		})
 		return // stop
 	default:
 		log.Print(err)
 		return // stop
 	}
-	peeves := []peeve{}
+	peeves := []peeveModel{}
 	go getPeeves(thisUser.Id, &peeves, errs)
 	err = <-errs
 	switch err {
@@ -50,11 +56,18 @@ func GetPeeves(c *gin.Context) {
 		log.Print(err)
 		return // stop
 	}
-	c.HTML(http.StatusOK, "user", map[string]interface{}{
-		"Peeves":          peeves,
-		"User":            thisUser,
-		"SessionUsername": username,
-		"Session":         session,
+	c.HTML(http.StatusOK, "user", struct {
+		Peeves          []peeveModel
+		User            userModel
+		SessionUsername string
+		Session         interface{}
+		Error           string
+	}{
+		peeves,
+		thisUser,
+		username,
+		session,
+		"",
 	})
 }
 
@@ -76,32 +89,45 @@ func CreatePeeve(c *gin.Context) {
 	f := c.Request.Form
 	switch {
 	case f["body"] == nil, len(f["body"]) != 1, f["body"][0] == "":
-		c.HTML(http.StatusOK, "user", map[string]interface{}{
-			"Error":           "Invalid Body",
-			"SessionUsername": username,
-			"Session":         session,
+		c.HTML(http.StatusOK, "user", struct {
+			Error           string
+			SessionUsername string
+			Session         interface{}
+		}{
+			"Invalid Body",
+			username,
+			session,
 		})
 		return
 	case len(f["body"][0]) > 140:
-		c.HTML(http.StatusOK, "user", map[string]interface{}{
-			"Error":           "Peeve Too Long",
-			"SessionUsername": username,
-			"Session":         session,
+		c.HTML(http.StatusOK, "user", struct {
+			Error           string
+			SessionUsername string
+			Session         interface{}
+		}{
+			"Peeve Too Long",
+			username,
+			session,
 		})
 		return
 	default:
-		user := user{}
+		user := userModel{}
 		go getOneUser(c.Param("username"), &user, errs)
 		err = <-errs
 		switch err {
 		case nil:
 			break
 		case gorethink.ErrEmptyResult:
-			c.HTML(http.StatusNotFound, "error", map[string]interface{}{
-				"Number":          "404",
-				"Body":            "Not Found",
-				"SessionUsername": username,
-				"Session":         session,
+			c.HTML(http.StatusNotFound, "error", struct {
+				Number          int
+				Body            string
+				SessionUsername string
+				Session         interface{}
+			}{
+				404,
+				"Not Found",
+				username,
+				session,
 			})
 			return
 		default:
@@ -109,7 +135,7 @@ func CreatePeeve(c *gin.Context) {
 			log.Print(err)
 			return // stop
 		}
-		go createPeeve(&peeve{
+		go createPeeve(&peeveModel{
 			// Id: bson.NewObjectId(),
 			Root: user.Id,
 			// as this is the root no parent
@@ -145,27 +171,34 @@ func DeletePeeve(c *gin.Context) {
 	switch {
 	// needs to be length 36 as rethinkdb's ids are len 36
 	case f["id"] == nil, len(f["id"]) != 1, len(f["id"][0]) != 36:
-		c.HTML(http.StatusOK, "user", map[string]interface{}{
-			"Error": "Invalid Id",
-			// "Peeves": peeves,
-			// "User": user,
-			"SessionUsername": username,
-			"Session":         session,
+		c.HTML(http.StatusOK, "user", struct {
+			Error           string
+			SessionUsername string
+			Session         interface{}
+		}{
+			"Invalid Id",
+			username,
+			session,
 		})
 		return
 	default:
-		user := user{}
+		user := userModel{}
 		go getOneUser(username, &user, errs)
 		err = <-errs
 		switch err {
 		case nil:
 			break
 		case gorethink.ErrEmptyResult:
-			c.HTML(http.StatusNotFound, "error", map[string]interface{}{
-				"Number":          "404",
-				"Body":            "Not Found",
-				"SessionUsername": username,
-				"Session":         session,
+			c.HTML(http.StatusNotFound, "error", struct {
+				Number          int
+				Body            string
+				SessionUsername string
+				Session         interface{}
+			}{
+				404,
+				"Not Found",
+				username,
+				session,
 			})
 			return
 		default:
@@ -204,33 +237,46 @@ func MeTooPeeve(c *gin.Context) {
 	switch {
 	// needs to be length 36 as rethinkdb's ids are len 36
 	case f["id"] == nil, len(f["id"]) != 1, len(f["id"][0]) != 36:
-		c.HTML(http.StatusOK, "user", map[string]interface{}{
-			"Error":           "Invalid Id",
-			"SessionUsername": username,
-			"Session":         session,
+		c.HTML(http.StatusOK, "user", struct {
+			Error           string
+			SessionUsername string
+			Session         interface{}
+		}{
+			"Invalid Id",
+			username,
+			session,
 		})
 		return
 	// needs to be length 36 as rethinkdb's ids are len 36
 	case f["user"] == nil, len(f["user"]) != 1, len(f["user"][0]) != 36:
-		c.HTML(http.StatusOK, "user", map[string]interface{}{
-			"Error":           "Invalid User",
-			"SessionUsername": username,
-			"Session":         session,
+		c.HTML(http.StatusOK, "user", struct {
+			Error           string
+			SessionUsername string
+			Session         interface{}
+		}{
+			"Invalid User",
+			username,
+			session,
 		})
 		return
 	default:
-		user := user{}
+		user := userModel{}
 		go getOneUser(username, &user, errs)
 		err = <-errs
 		switch err {
 		case nil:
 			break
 		case gorethink.ErrEmptyResult:
-			c.HTML(http.StatusNotFound, "error", map[string]interface{}{
-				"Number":          "404",
-				"Body":            "Not Found",
-				"SessionUsername": username,
-				"Session":         session,
+			c.HTML(http.StatusNotFound, "error", struct {
+				Number          int
+				Body            string
+				SessionUsername string
+				Session         interface{}
+			}{
+				404,
+				"Not Found",
+				username,
+				session,
 			})
 			return
 		default:
@@ -238,7 +284,7 @@ func MeTooPeeve(c *gin.Context) {
 			log.Print(err)
 			return // stop
 		}
-		metoopeeve := peeve{}
+		metoopeeve := peeveModel{}
 		// don't assume input is valid
 		go getOnePeeve(f["id"][0], f["user"][0], &metoopeeve, errs)
 		err = <-errs
@@ -246,11 +292,16 @@ func MeTooPeeve(c *gin.Context) {
 		case nil:
 			break
 		case gorethink.ErrEmptyResult:
-			c.HTML(http.StatusNotFound, "error", map[string]interface{}{
-				"Number":          "404",
-				"Body":            "Not Found",
-				"SessionUsername": username,
-				"Session":         session,
+			c.HTML(http.StatusNotFound, "error", struct {
+				Number          int
+				Body            string
+				SessionUsername string
+				Session         interface{}
+			}{
+				404,
+				"Not Found",
+				username,
+				session,
 			})
 			return
 		default:
@@ -258,7 +309,7 @@ func MeTooPeeve(c *gin.Context) {
 			log.Print(err)
 			return // stop
 		}
-		peevey := &peeve{
+		peevey := &peeveModel{
 			// Id: bson.NewObjectId(), // create new id
 			Root:      metoopeeve.Root,   // peeve origin
 			Parent:    metoopeeve.UserId, // who I got it from

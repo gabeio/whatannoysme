@@ -33,40 +33,52 @@ func CreateUser(c *gin.Context) {
 	switch {
 	// if username isn't present or there aren't username field(s) or blank
 	case f["username"] == nil, len(f["username"]) != 1, f["username"][0] == "":
-		c.HTML(http.StatusOK, "signup", map[string]interface{}{
-			"Error": "Bad Username",
+		c.HTML(http.StatusOK, "signup", struct {
+			Error string
+		}{
+			"Bad Username",
 		})
 		return // stop
 	// if password isn't present or there aren't 2 password field(s) or blank
 	case f["password"] == nil, len(f["password"]) != 2, f["password"][0] == "":
-		c.HTML(http.StatusOK, "signup", map[string]interface{}{
-			"Error": "Bad Password",
+		c.HTML(http.StatusOK, "signup", struct {
+			Error string
+		}{
+			"Bad Password",
 		})
 		return // stop
 	// if email isn't present or there aren't 1 email field(s) or email is blank
 	case f["email"] == nil, len(f["email"]) != 1, f["email"][0] == "":
-		c.HTML(http.StatusOK, "signup", map[string]interface{}{
-			"Error": "Bad Email",
+		c.HTML(http.StatusOK, "signup", struct {
+			Error string
+		}{
+			"Bad Email",
 		})
 		return // stop
 	// max username length 13
 	case len(f["username"][0]) > 13:
-		c.HTML(http.StatusOK, "signup", map[string]interface{}{
-			"Error": "Username too long",
+		c.HTML(http.StatusOK, "signup", struct {
+			Error string
+		}{
+			"Username too long",
 		})
 		return // stop
 	// if the two passwords don't match
 	case f["password"][0] != f["password"][1]:
-		c.HTML(http.StatusOK, "signup", map[string]interface{}{
-			"Error": "Passwords do not match",
+		c.HTML(http.StatusOK, "signup", struct {
+			Error string
+		}{
+			"Passwords do not match",
 		})
 		return // stop
 	}
 	// otherwise regester user
 	if len(strings.Fields(f["username"][0])) > 1 {
 		// username has \t \n or space
-		c.HTML(http.StatusOK, "signup", map[string]interface{}{
-			"Error": "Username Contains Invalid Characters",
+		c.HTML(http.StatusOK, "signup", struct {
+			Error string
+		}{
+			"Username Contains Invalid Characters",
 		})
 		return // stop
 	}
@@ -78,8 +90,10 @@ func CreateUser(c *gin.Context) {
 		log.Print(err)
 	}
 	if i > 1 {
-		c.HTML(http.StatusOK, "signup", map[string]interface{}{
-			"Error": "Username taken",
+		c.HTML(http.StatusOK, "signup", struct {
+			Error string
+		}{
+			"Username taken",
 		})
 		return // stop
 	}
@@ -89,7 +103,7 @@ func CreateUser(c *gin.Context) {
 		log.Print(err)
 		return // stop
 	}
-	newuser := &user{
+	newuser := &userModel{
 		// Id: bson.NewObjectId(),
 		Username: f["username"][0],
 		Hash:     string(hash),
@@ -138,7 +152,7 @@ func Login(c *gin.Context) {
 		return // stop
 	default:
 		f["username"][0] = strings.ToLower(f["username"][0]) // assure one user per username
-		user := user{}
+		user := userModel{}
 		go getOneUser(f["username"][0], &user, errs)
 		err = <-errs
 		switch err {
@@ -201,7 +215,7 @@ func Settings(c *gin.Context) {
 	errs := make(chan error)
 	defer close(errs)
 	username, _ := session.Values["username"].(string)
-	thisuser := user{}
+	thisuser := userModel{}
 	go getOneUser(username, &thisuser, errs)
 	if err = <-errs; err != nil {
 		log.Print("getOneUser", err)

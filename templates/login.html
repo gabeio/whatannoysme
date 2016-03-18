@@ -2,10 +2,6 @@
 			<div class="row">
 				<div class="col-xs-12 col-sm-12 col-md-12 col-lg-10 col-lg-offset-1">
 					<form class="form-horizontal" method="POST" enctype="multipart/form-data">
-{{ if .Csrf }}
-	<!-- csrf -->
-						<input type="hidden" name="_csrf" value="{{ .Csrf }}" />
-{{ end }}
 						<div class="form-group">
 							<div class="col-sm-12">
 								<h2>Login</h2>

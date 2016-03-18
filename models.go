@@ -14,27 +14,27 @@ import (
 // RETHINK MODELS
 type (
 	// HINT: do not add spaces after commas for structure hints.
-	user struct {
-		Id        string    `gorethink:"id,omitempty"` //
-		Username  string    `gorethink:"username"`     //
-		Hash      string    `gorethink:"hash"`         //
-		FirstName string    `gorethink:"firstname"`    //
-		LastName  string    `gorethink:"lastname"`     //
-		Email     string    `gorethink:"email"`        //
-		Joined    time.Time `gorethink:"joined"`       //
+	userModel struct {
+		Id        string    `gorethink:"id,omitempty"`        //
+		Username  string    `gorethink:"username,omitempty"`  //
+		Hash      string    `gorethink:"hash,omitempty"`      //
+		FirstName string    `gorethink:"firstname,omitempty"` //
+		LastName  string    `gorethink:"lastname,omitempty"`  //
+		Email     string    `gorethink:"email,omitempty"`     //
+		Joined    time.Time `gorethink:"joined,omitempty"`    //
 	}
 
-	peeve struct {
+	peeveModel struct {
 		Id     string `gorethink:"id,omitempty"`     // the id of this peeve
-		Root   string `gorethink:"root"`             // original user to create the peeve
+		Root   string `gorethink:"root,omitempty"`   // original user to create the peeve
 		Parent string `gorethink:"parent,omitempty"` // person +1 toward the origin
 		// parent must be blank if this peeve is the origin
-		UserId    string    `gorethink:"user"`      // the user who owns this version
-		Body      string    `gorethink:"body"`      // the peeve's text
-		Timestamp time.Time `gorethink:"timestamp"` // when this version of the peeve was made
+		UserId    string    `gorethink:"user,omitempty"`      // the user who owns this version
+		Body      string    `gorethink:"body,omitempty"`      // the peeve's text
+		Timestamp time.Time `gorethink:"timestamp,omitempty"` // when this version of the peeve was made
 	}
 
-	peeveAndUser struct {
+	peeveAndUserModel struct {
 		Id        string    `gorethink:"id,omitempty"`
 		Username  string    `gorethink:"username,omitempty"`
 		Hash      string    `gorethink:"hash,omitempty"`
@@ -53,28 +53,28 @@ type (
 
 // struct functions
 
-func (u *user) setFirstName(firstName string) error {
-	_, err := r.Table("users").Get(u.Id).Update(map[string]interface{}{
-		"firstname": firstName,
+func (u *userModel) setFirstName(firstName string) error {
+	_, err := r.Table("users").Get(u.Id).Update(userModel{
+		FirstName: firstName,
 	}).RunWrite(rethinkSession)
 	return err
 }
 
-func (u *user) setLastName(lastName string) error {
-	_, err := r.Table("users").Get(u.Id).Update(map[string]interface{}{
-		"lastname": lastName,
+func (u *userModel) setLastName(lastName string) error {
+	_, err := r.Table("users").Get(u.Id).Update(userModel{
+		LastName: lastName,
 	}).RunWrite(rethinkSession)
 	return err
 }
 
-func (u *user) setPassword(password string) error {
-	_, err := r.Table("users").Get(u.Id).Update(map[string]interface{}{
-		"hash": bcryptHash(password),
+func (u *userModel) setPassword(password string) error {
+	_, err := r.Table("users").Get(u.Id).Update(userModel{
+		Hash: bcryptHash(password),
 	}).RunWrite(rethinkSession)
 	return err
 }
 
-func (u *user) FullName() string {
+func (u *userModel) FullName() string {
 	return u.FirstName + " " + u.LastName
 }
 

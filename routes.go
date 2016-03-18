@@ -84,7 +84,7 @@ func Search(c *gin.Context) {
 		})
 		return
 	case f["q"] != nil, len(f["q"]) == 1:
-		users := []user{} // many users can be returned
+		users := []userModel{} // many users can be returned
 		errs := make(chan error)
 		defer close(errs)
 		go searchUser(f["q"][0], &users, errs)
@@ -97,7 +97,7 @@ func Search(c *gin.Context) {
 			log.Print(err)
 			return // stop
 		}
-		peeves := []peeveAndUser{} // many peeves can be returned
+		peeves := []peeveAndUserModel{} // many peeves can be returned
 		go searchPeeve(f["q"][0], &peeves, errs)
 		err = <-errs
 		switch err {

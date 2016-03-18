@@ -72,7 +72,7 @@ func main() {
 	r.Use(gin.Recovery())
 	r.Use(gzip.Gzip(gzip.DefaultCompression))
 	r.Use(secure.Secure(secure.Options{
-		AllowedHosts:       []string{"whatannoys.me", "www.whatannoys.me", "direct.whatannoys.me"},
+		AllowedHosts:       []string{"localhost:8090", "whatannoys.me", "www.whatannoys.me", "direct.whatannoys.me"},
 		SSLProxyHeaders:    map[string]string{"X-Forwarded-Proto": "https"},
 		FrameDeny:          true,
 		ContentTypeNosniff: true,
