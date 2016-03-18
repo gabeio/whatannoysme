@@ -33,6 +33,7 @@ func GetPeeves(c *gin.Context) {
 			"SessionUsername": username, // this might be blank
 			"Session":         session,  // this might be blank
 		})
+		return // stop
 	default:
 		log.Print(err)
 		return // stop
@@ -80,12 +81,14 @@ func CreatePeeve(c *gin.Context) {
 			"SessionUsername": username,
 			"Session":         session,
 		})
+		return
 	case len(f["body"][0]) > 140:
 		c.HTML(http.StatusOK, "user", map[string]interface{}{
 			"Error":           "Peeve Too Long",
 			"SessionUsername": username,
 			"Session":         session,
 		})
+		return
 	default:
 		user := user{}
 		go getOneUser(c.Param("username"), &user, errs)
@@ -100,6 +103,7 @@ func CreatePeeve(c *gin.Context) {
 				"SessionUsername": username,
 				"Session":         session,
 			})
+			return
 		default:
 			http.Error(c.Writer, http.StatusText(500), 500)
 			log.Print(err)
@@ -148,6 +152,7 @@ func DeletePeeve(c *gin.Context) {
 			"SessionUsername": username,
 			"Session":         session,
 		})
+		return
 	default:
 		user := user{}
 		go getOneUser(username, &user, errs)
@@ -162,6 +167,7 @@ func DeletePeeve(c *gin.Context) {
 				"SessionUsername": username,
 				"Session":         session,
 			})
+			return
 		default:
 			http.Error(c.Writer, http.StatusText(500), 500)
 			log.Print(err)
@@ -203,6 +209,7 @@ func MeTooPeeve(c *gin.Context) {
 			"SessionUsername": username,
 			"Session":         session,
 		})
+		return
 	// needs to be length 36 as rethinkdb's ids are len 36
 	case f["user"] == nil, len(f["user"]) != 1, len(f["user"][0]) != 36:
 		c.HTML(http.StatusOK, "user", map[string]interface{}{
@@ -210,6 +217,7 @@ func MeTooPeeve(c *gin.Context) {
 			"SessionUsername": username,
 			"Session":         session,
 		})
+		return
 	default:
 		user := user{}
 		go getOneUser(username, &user, errs)
@@ -224,6 +232,7 @@ func MeTooPeeve(c *gin.Context) {
 				"SessionUsername": username,
 				"Session":         session,
 			})
+			return
 		default:
 			http.Error(c.Writer, http.StatusText(500), 500)
 			log.Print(err)
@@ -243,6 +252,7 @@ func MeTooPeeve(c *gin.Context) {
 				"SessionUsername": username,
 				"Session":         session,
 			})
+			return
 		default:
 			http.Error(c.Writer, http.StatusText(500), 500)
 			log.Print(err)

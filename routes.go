@@ -16,6 +16,7 @@ func IndexTemplate(c *gin.Context) {
 	username, _ := session.Values["username"].(string)
 	if username != "" {
 		c.Redirect(302, "/u/"+username) // redirect to their page
+		return
 	}
 	c.HTML(http.StatusOK, "index", nil) // only serve index.html
 }
@@ -28,6 +29,7 @@ func SignupTemplate(c *gin.Context) {
 	username, _ := session.Values["username"].(string)
 	if username != "" {
 		c.Redirect(302, "/u/"+username)
+		return
 	}
 	c.HTML(http.StatusOK, "signup", nil)
 }
@@ -40,6 +42,7 @@ func LoginTemplate(c *gin.Context) {
 	username, _ := session.Values["username"].(string)
 	if username != "" {
 		c.Redirect(302, "/u/"+username)
+		return
 	}
 	c.HTML(http.StatusOK, "login", nil)
 }
@@ -53,6 +56,7 @@ func SettingsTemplate(c *gin.Context) {
 	if username == "" {
 		// user is not logged in
 		c.Redirect(302, "/")
+		return
 	}
 	c.HTML(http.StatusOK, "settings", map[string]interface{}{
 		"SessionUsername": username,
@@ -78,10 +82,7 @@ func Search(c *gin.Context) {
 			"SessionUsername": username, // this might be blank
 			"Session":         session,  // this might be blank
 		})
-		if err != nil {
-			log.Print(err)
-			return // stop
-		}
+		return
 	case f["q"] != nil, len(f["q"]) == 1:
 		users := []user{} // many users can be returned
 		errs := make(chan error)
@@ -113,10 +114,6 @@ func Search(c *gin.Context) {
 			"SessionUsername": username,
 			"Session":         session,
 		})
-		if err != nil {
-			log.Print(err)
-			return // stop
-		}
 		return // stop
 	default:
 		c.Redirect(302, "/"+f["q"][0])
