@@ -1,124 +1,125 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
-	// echo
-	"github.com/labstack/echo"
+	// gin
+	"github.com/gin-gonic/gin"
 )
 
-func IndexTemplate(c *echo.Context) error {
-	session, err := redisStore.Get(c.Request(), sessionName)
+func IndexTemplate(c *gin.Context) {
+	session, err := redisStore.Get(c.Request, sessionName)
 	if err != nil {
-		c.Echo().Logger().Debug(err)
+		log.Print(err)
 	}
 	username, _ := session.Values["username"].(string)
 	if username != "" {
-		return c.Redirect(302, "/"+username) // redirect to their page
+		c.Redirect(302, "/u/"+username) // redirect to their page
 	}
-	return c.Render(http.StatusOK, "index", nil) // only serve index.html
+	c.HTML(http.StatusOK, "index", nil) // only serve index.html
 }
 
-func SignupTemplate(c *echo.Context) error {
-	session, err := redisStore.Get(c.Request(), sessionName)
+func SignupTemplate(c *gin.Context) {
+	session, err := redisStore.Get(c.Request, sessionName)
 	if err != nil {
-		c.Echo().Logger().Debug(err)
+		log.Print(err)
 	}
 	username, _ := session.Values["username"].(string)
 	if username != "" {
-		return c.Redirect(302, "/"+username)
+		c.Redirect(302, "/u/"+username)
 	}
-	return c.Render(http.StatusOK, "signup", nil)
+	c.HTML(http.StatusOK, "signup", nil)
 }
 
-func LoginTemplate(c *echo.Context) error {
-	session, err := redisStore.Get(c.Request(), sessionName)
+func LoginTemplate(c *gin.Context) {
+	session, err := redisStore.Get(c.Request, sessionName)
 	if err != nil {
-		c.Echo().Logger().Debug(err)
+		log.Print(err)
 	}
 	username, _ := session.Values["username"].(string)
 	if username != "" {
-		return c.Redirect(302, "/"+username)
+		c.Redirect(302, "/u/"+username)
 	}
-	return c.Render(http.StatusOK, "login", nil)
+	c.HTML(http.StatusOK, "login", nil)
 }
 
-func SettingsTemplate(c *echo.Context) error {
-	session, err := redisStore.Get(c.Request(), sessionName)
+func SettingsTemplate(c *gin.Context) {
+	session, err := redisStore.Get(c.Request, sessionName)
 	if err != nil {
-		c.Echo().Logger().Debug(err)
+		log.Print(err)
 	}
 	username, _ := session.Values["username"].(string)
 	if username == "" {
 		// user is not logged in
-		return c.Redirect(302, "/")
+		c.Redirect(302, "/")
 	}
-	if username != c.Param("username") {
-		// user is not this user
-		return c.Redirect(302, "/"+username+"/settings")
-	}
-	return c.Render(http.StatusOK, "settings", map[string]interface{}{
+	c.HTML(http.StatusOK, "settings", map[string]interface{}{
 		"SessionUsername": username,
 	})
 }
 
-func Search(c *echo.Context) error {
+func Search(c *gin.Context) {
 	var username string
-	session, err := redisStore.Get(c.Request(), sessionName)
+	session, err := redisStore.Get(c.Request, sessionName)
 	if err != nil {
-		c.Echo().Logger().Debug(err)
+		log.Print(err)
 	}
 	username, _ = session.Values["username"].(string) // convert to string
-	c.Request().ParseForm()                           // translate form
-	c.Request().ParseMultipartForm(1000000)           // translate multipart 1Mb limit
-	f := c.Request().Form
+	c.Request.ParseForm()                             // translate form
+	c.Request.ParseMultipartForm(1000000)             // translate multipart 1Mb limit
+	f := c.Request.Form
 	switch {
 	case f["q"] == nil, len(f["q"]) != 1:
 		// if query isn't defined or isn't an array of 1 element
-		return c.Render(http.StatusNotFound, "error", map[string]interface{}{
+		c.HTML(http.StatusNotFound, "error", map[string]interface{}{
 			"Number":          "404",
 			"Body":            "Not Found",
 			"SessionUsername": username, // this might be blank
 			"Session":         session,  // this might be blank
 		})
 		if err != nil {
-			c.Echo().Logger().Debug(err)
-			return nil // stop
+			log.Print(err)
+			return // stop
 		}
 	case f["q"] != nil, len(f["q"]) == 1:
 		users := []user{} // many users can be returned
+		errs := make(chan error)
+		defer close(errs)
 		go searchUser(f["q"][0], &users, errs)
-		switch <-errs {
+		err = <-errs
+		switch err {
 		case nil:
 			break // nil is good
 		default:
-			http.Error(c.Response(), http.StatusText(500), 500)
-			c.Echo().Logger().Debug(<-errs)
-			return nil // stop
+			http.Error(c.Writer, http.StatusText(500), 500)
+			log.Print(err)
+			return // stop
 		}
 		peeves := []peeveAndUser{} // many peeves can be returned
 		go searchPeeve(f["q"][0], &peeves, errs)
-		switch <-errs {
+		err = <-errs
+		switch err {
 		case nil:
 			break // nil is good
 		default:
-			http.Error(c.Response(), http.StatusText(500), 500)
-			c.Echo().Logger().Debug(<-errs)
-			return nil // stop
+			http.Error(c.Writer, http.StatusText(500), 500)
+			log.Print(err)
+			return // stop
 		}
-		return c.Render(http.StatusOK, "search", map[string]interface{}{
+		c.HTML(http.StatusOK, "search", map[string]interface{}{
 			"Users":           users,
 			"Peeves":          peeves,
 			"SessionUsername": username,
 			"Session":         session,
 		})
 		if err != nil {
-			c.Echo().Logger().Debug(err)
-			return nil // stop
+			log.Print(err)
+			return // stop
 		}
-		return nil // stop
+		return // stop
 	default:
-		return c.Redirect(302, "/"+f["q"][0])
+		c.Redirect(302, "/"+f["q"][0])
 	}
-	return nil // stop
+	return // stop
 }

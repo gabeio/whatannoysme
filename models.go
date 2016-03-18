@@ -103,7 +103,7 @@ func (u *user) FullName() string {
 func bcryptHash(password string) (hash string) {
 	bytehash, err := bcrypt.GenerateFromPassword([]byte(password), bcryptStrength)
 	if err != nil {
-		log.Panic(err) // record what "broke"
+		log.Panic("models.bcryptHash", err) // record what "broke"
 	}
 	hash = string(bytehash)
 	return
