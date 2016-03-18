@@ -34,9 +34,6 @@ var (
 	bcryptStrength int = 12
 	// present working directory
 	pwd string
-	// errors
-	// err  error
-	// errs := make(chan error)
 )
 
 func main() {
