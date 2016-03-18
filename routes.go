@@ -58,8 +58,10 @@ func SettingsTemplate(c *gin.Context) {
 		c.Redirect(302, "/")
 		return
 	}
-	c.HTML(http.StatusOK, "settings", map[string]interface{}{
-		"SessionUsername": username,
+	c.HTML(http.StatusOK, "settings", struct {
+		SessionUsername string
+	}{
+		username,
 	})
 }
 
@@ -76,11 +78,16 @@ func Search(c *gin.Context) {
 	switch {
 	case f["q"] == nil, len(f["q"]) != 1:
 		// if query isn't defined or isn't an array of 1 element
-		c.HTML(http.StatusNotFound, "error", map[string]interface{}{
-			"Number":          "404",
-			"Body":            "Not Found",
-			"SessionUsername": username, // this might be blank
-			"Session":         session,  // this might be blank
+		c.HTML(http.StatusNotFound, "error", struct {
+			Number          int
+			Body            string
+			SessionUsername string
+			Session         interface{}
+		}{
+			404,
+			"Not Found",
+			username, // this might be blank
+			session,  // this might be blank
 		})
 		return
 	case f["q"] != nil, len(f["q"]) == 1:
@@ -108,11 +115,16 @@ func Search(c *gin.Context) {
 			log.Print(err)
 			return // stop
 		}
-		c.HTML(http.StatusOK, "search", map[string]interface{}{
-			"Users":           users,
-			"Peeves":          peeves,
-			"SessionUsername": username,
-			"Session":         session,
+		c.HTML(http.StatusOK, "search", struct {
+			Users           []userModel
+			Peeves          []peeveAndUserModel
+			SessionUsername string
+			Sessoin         interface{}
+		}{
+			users,
+			peeves,
+			username,
+			session,
 		})
 		return // stop
 	default:

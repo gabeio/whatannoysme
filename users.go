@@ -141,13 +141,17 @@ func Login(c *gin.Context) {
 	f := c.Request.Form
 	switch {
 	case f["username"] == nil, len(f["username"]) != 1, f["username"][0] == "":
-		c.HTML(http.StatusOK, "login", map[string]interface{}{
-			"Error": "Invalid Username",
+		c.HTML(http.StatusOK, "login", struct {
+			Error string
+		}{
+			"Invalid Username",
 		})
 		return // stop
 	case f["password"] == nil, len(f["password"]) != 1, f["password"][0] == "":
-		c.HTML(http.StatusOK, "login", map[string]interface{}{
-			"Error": "Invalid Password",
+		c.HTML(http.StatusOK, "login", struct {
+			Error string
+		}{
+			"Invalid Password",
 		})
 		return // stop
 	default:
@@ -159,8 +163,10 @@ func Login(c *gin.Context) {
 		case nil:
 			break
 		case gorethink.ErrEmptyResult:
-			c.HTML(http.StatusOK, "login", map[string]interface{}{
-				"Error": "Invalid Username or Password",
+			c.HTML(http.StatusOK, "login", struct {
+				Error string
+			}{
+				"Invalid Username or Password",
 			})
 			return // stop
 		default:
@@ -175,8 +181,10 @@ func Login(c *gin.Context) {
 			break
 		case bcrypt.ErrMismatchedHashAndPassword:
 			// incorrect password
-			c.HTML(http.StatusOK, "login", map[string]interface{}{
-				"Error": "Invalid Username or Password",
+			c.HTML(http.StatusOK, "login", struct {
+				Error string
+			}{
+				"Invalid Username or Password",
 			})
 			return // stop
 		default:

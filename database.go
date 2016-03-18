@@ -47,12 +47,12 @@ func getRethinkSession(sessionChan chan *r.Session) {
 		rethinkauth = os.Getenv("RETHINK_AUTH")
 	}
 	session, err := r.Connect(r.ConnectOpts{
-		Addresses:     rethinkurl,
-		AuthKey:       rethinkauth,
-		Database:      rethinkdb,
-		MaxIdle:       10,
-		MaxOpen:       40,
-		DiscoverHosts: true,
+		Addresses: rethinkurl,
+		AuthKey:   rethinkauth,
+		Database:  rethinkdb,
+		MaxIdle:   10,
+		MaxOpen:   40,
+		// DiscoverHosts: true,
 	})
 	session.Use(rethinkdb)
 	if err != nil {
