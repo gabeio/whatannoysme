@@ -71,8 +71,8 @@ func getRediStore(redisChan chan *redis.RediStore) {
 		redisClients = 2
 	}
 	// auth?
-	if os.Getenv("REDIS_PASS") != "" {
-		redisPassword = os.Getenv("REDIS_PASS")
+	if os.Getenv("REDIS_AUTH") != "" {
+		redisPassword = os.Getenv("REDIS_AUTH")
 	}
 	switch {
 	// simple
